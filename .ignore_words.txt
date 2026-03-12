@@ -70,3 +70,4 @@ xunit
 pycln
 taplo
 Zensical
+gwsim
