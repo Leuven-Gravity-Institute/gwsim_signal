@@ -1,0 +1,70 @@
+name: Publish to PyPI
+
+on:
+    workflow_dispatch:
+        inputs:
+            tag_name:
+                description: 'Tag name for the publish (e.g., v1.2.3)'
+                required: true
+                type: string
+    workflow_call:
+        inputs:
+            tag_name:
+                description: 'Tag name for the publish (e.g., v1.2.3)'
+                required: true
+                type: string
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+              with:
+                  ref: ${{ inputs.tag_name || github.event.inputs.tag_name }}
+                  fetch-depth: 0
+
+            - name: Output build information
+              run: |
+                  echo "### Publishing Build :package:" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Version tag**: ${{ inputs.tag_name || github.event.inputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7
+              with:
+                  python-version: '3.14.3'
+                  enable-cache: 'true'
+
+            - name: Install dependencies
+              run: uv sync --frozen
+
+            - name: Build distribution
+              run: uv build
+
+            - name: Upload build artifacts
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+              with:
+                  name: python-package-distributions
+                  path: dist/
+
+    publish-to-pypi:
+        needs: build
+        runs-on: ubuntu-latest
+        environment: pypi
+        permissions:
+            id-token: write
+
+        steps:
+            - name: Download build artifacts
+              uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+              with:
+                  name: python-package-distributions
+                  path: dist/
+
+            - name: Publish to PyPI
+              uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+              # Remove this line if you want the workflow to fail on publish errors
+              # This is added for this template only since the environment 'pypi' is
+              # not created to avoid publishing
+              continue-on-error: true
+              with:
+                  packages-dir: dist/

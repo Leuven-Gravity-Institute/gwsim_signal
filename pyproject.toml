@@ -1,0 +1,145 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "python_package_template"
+authors = [{ name = "Isaac C. F. Wong" }]
+description = "A GitHub template repository for a Python package"
+readme = "README.md"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.12"
+dynamic = ["version"]
+dependencies = ["typer>=0.24.1"]
+
+[project.optional-dependencies]
+test = [
+  "bandit[toml]>=1.9.4",
+  "ruff>=0.15.5",
+  "pre-commit>=4.5.1",
+  "pytest-cov>=7.0.0",
+  "pytest-mock>=3.15.1",
+  "pytest-runner>=6.0.1",
+  "pytest>=9.0.2",
+]
+ci = ["pytest-github-actions-annotate-failures>=0.4.0"]
+dev = ["pre-commit>=4.5.1", "python_package_template[test,docs]"]
+docs = ["zensical>=0.0.24", "mkdocstrings-python>=2.0.3"]
+build = ["hatch>=1.16.5"]
+
+[project.scripts]
+python_package_template = "python_package_template.cli.main:app"
+
+[project.urls]
+Documentation = "https://isaac-cf-wong.github.io/python-package-template"
+Source = "https://github.com/isaac-cf-wong/python-package-template"
+Tracker = "https://github.com/isaac-cf-wong/python-package-template/issues"
+Home = "https://github.com/isaac-cf-wong/python-package-template"
+"Release Notes" = "https://github.com/isaac-cf-wong/python-package-template/releases"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/python_package_template"]
+
+[tool.bandit]
+exclude_dirs = ["build", "dist", "tests", "scripts"]
+number = 4
+recursive = true
+targets = "src"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+fail_under = 0
+
+[tool.pytest.ini_options]
+addopts = "--cov-report xml:coverage.xml --cov src --cov-append -m 'not integration' --cov-report=term-missing"
+pythonpath = ["src"]
+testpaths = "tests"
+junit_family = "xunit2"
+markers = [
+  "integration: marks as integration test",
+  "notebooks: marks as notebook test",
+  "gpu: marks as gpu test",
+  "spark: marks tests which need Spark",
+  "slow: marks tests as slow",
+  "unit: fast offline tests",
+]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py, integration, spark, all
+
+[testenv]
+commands =
+    pytest -m "not integration and not spark" {posargs}
+
+[testenv:integration]
+commands =
+    pytest -m "integration" {posargs}
+
+[testenv:spark]
+extras = spark
+setenv =
+       PYSPARK_DRIVER_PYTHON = {envpython}
+       PYSPARK_PYTHON = {envpython}
+commands =
+    pytest -m "spark" {posargs}
+
+[testenv:all]
+extras = all
+setenv =
+       PYSPARK_DRIVER_PYTHON = {envpython}
+       PYSPARK_PYTHON = {envpython}
+commands =
+    pytest {posargs}
+"""
+
+[tool.ruff]
+line-length = 120 # Matches Black's default
+target-version = "py310" # Align with CI (3.10–3.12) and requires-python (>=3.10)
+lint.extend-select = [
+  "E",
+  "F",
+  "W",   # pycodestyle errors and warnings
+  "I",   # isort rules
+  "UP",  # pyupgrade rules
+  "C90", # McCabe complexity
+  "N",   # PEP8 naming
+  "B",   # Bugbear (opinionated checks)
+  "A",   # Flake8-builtins
+  "C4",  # Flake8-comprehensions
+  "PT",  # Flake8-pytest
+  "RUF", # Ruff-specific rules
+  "PL",  # Add pylint rules for fuller coverage
+  "SIM", # Similarities
+  "T10", # Debugger statements
+  "DOC", # Docstring
+  "D",   # Doc style
+]
+lint.ignore = [
+  "E501", # Line length (handled by formatter)
+  "C901", # Disable overly strict complexity checks (optional, adjust as needed)
+]
+fix = true # Enable autofix
+lint.unfixable = [] # List rules that should not be autofixed, if any
+
+[tool.ruff.format]
+quote-style = "double"       # Use double quotes for strings
+indent-style = "space"       # Use spaces for indentation
+docstring-code-format = true # Format code in docstrings
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
