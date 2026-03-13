@@ -350,6 +350,71 @@ wheels = [
 ]
 
 [[package]]
+name = "gwsim-signal"
+source = { editable = "." }
+dependencies = [
+    { name = "typer" },
+]
+
+[package.optional-dependencies]
+build = [
+    { name = "hatch" },
+]
+ci = [
+    { name = "pytest-github-actions-annotate-failures" },
+]
+dev = [
+    { name = "bandit" },
+    { name = "mkdocstrings-python" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "pytest-runner" },
+    { name = "ruff" },
+    { name = "zensical" },
+]
+docs = [
+    { name = "mkdocstrings-python" },
+    { name = "zensical" },
+]
+test = [
+    { name = "bandit" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "pytest-runner" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bandit", extras = ["toml"], marker = "extra == 'dev'", specifier = ">=1.9.4" },
+    { name = "bandit", extras = ["toml"], marker = "extra == 'test'", specifier = ">=1.9.4" },
+    { name = "hatch", marker = "extra == 'build'", specifier = ">=1.16.5" },
+    { name = "mkdocstrings-python", marker = "extra == 'dev'", specifier = ">=2.0.3" },
+    { name = "mkdocstrings-python", marker = "extra == 'docs'", specifier = ">=2.0.3" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
+    { name = "pre-commit", marker = "extra == 'test'", specifier = ">=4.5.1" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=9.0.2" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0.0" },
+    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.0.0" },
+    { name = "pytest-github-actions-annotate-failures", marker = "extra == 'ci'", specifier = ">=0.4.0" },
+    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.15.1" },
+    { name = "pytest-mock", marker = "extra == 'test'", specifier = ">=3.15.1" },
+    { name = "pytest-runner", marker = "extra == 'dev'", specifier = ">=6.0.1" },
+    { name = "pytest-runner", marker = "extra == 'test'", specifier = ">=6.0.1" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.5" },
+    { name = "ruff", marker = "extra == 'test'", specifier = ">=0.15.5" },
+    { name = "typer", specifier = ">=0.24.1" },
+    { name = "zensical", marker = "extra == 'dev'", specifier = ">=0.0.24" },
+    { name = "zensical", marker = "extra == 'docs'", specifier = ">=0.0.24" },
+]
+provides-extras = ["build", "ci", "dev", "docs", "test"]
+
+[[package]]
 name = "h11"
 version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -943,71 +1008,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/ec/67/09765eacf4e44413c
 wheels = [
     { url = "https://files.pythonhosted.org/packages/75/0f/2bf7e3b5a4a65f623cb820feb5793e243fad58ae561015ee15a6152f67a2/python_discovery-1.1.1-py3-none-any.whl", hash = "sha256:69f11073fa2392251e405d4e847d60ffffd25fd762a0dc4d1a7d6b9c3f79f1a3", size = 30732, upload-time = "2026-03-07T00:00:55.143Z" },
 ]
-
-[[package]]
-name = "python-package-template"
-source = { editable = "." }
-dependencies = [
-    { name = "typer" },
-]
-
-[package.optional-dependencies]
-build = [
-    { name = "hatch" },
-]
-ci = [
-    { name = "pytest-github-actions-annotate-failures" },
-]
-dev = [
-    { name = "bandit" },
-    { name = "mkdocstrings-python" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-    { name = "pytest-runner" },
-    { name = "ruff" },
-    { name = "zensical" },
-]
-docs = [
-    { name = "mkdocstrings-python" },
-    { name = "zensical" },
-]
-test = [
-    { name = "bandit" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-    { name = "pytest-runner" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "bandit", extras = ["toml"], marker = "extra == 'dev'", specifier = ">=1.9.4" },
-    { name = "bandit", extras = ["toml"], marker = "extra == 'test'", specifier = ">=1.9.4" },
-    { name = "hatch", marker = "extra == 'build'", specifier = ">=1.16.5" },
-    { name = "mkdocstrings-python", marker = "extra == 'dev'", specifier = ">=2.0.3" },
-    { name = "mkdocstrings-python", marker = "extra == 'docs'", specifier = ">=2.0.3" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
-    { name = "pre-commit", marker = "extra == 'test'", specifier = ">=4.5.1" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=9.0.2" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0.0" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.0.0" },
-    { name = "pytest-github-actions-annotate-failures", marker = "extra == 'ci'", specifier = ">=0.4.0" },
-    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.15.1" },
-    { name = "pytest-mock", marker = "extra == 'test'", specifier = ">=3.15.1" },
-    { name = "pytest-runner", marker = "extra == 'dev'", specifier = ">=6.0.1" },
-    { name = "pytest-runner", marker = "extra == 'test'", specifier = ">=6.0.1" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.5" },
-    { name = "ruff", marker = "extra == 'test'", specifier = ">=0.15.5" },
-    { name = "typer", specifier = ">=0.24.1" },
-    { name = "zensical", marker = "extra == 'dev'", specifier = ">=0.0.24" },
-    { name = "zensical", marker = "extra == 'docs'", specifier = ">=0.0.24" },
-]
-provides-extras = ["build", "ci", "dev", "docs", "test"]
 
 [[package]]
 name = "pywin32-ctypes"

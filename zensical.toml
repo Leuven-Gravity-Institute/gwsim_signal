@@ -11,13 +11,13 @@
 # The site_name is shown in the page header and the browser window title
 #
 # Read more: https://zensical.org/docs/setup/basics/#site_name
-site_name = "Python Package Template Documentation"
+site_name = "gwsim_signal Documentation"
 
 # The site_description is included in the HTML head and should contain a
 # meaningful description of the site content for use by search engines.
 #
 # Read more: https://zensical.org/docs/setup/basics/#site_description
-site_description = "A GitHub template repository for a Python package."
+site_description = "A Python package for simulating gravitational wave signals."
 
 # The site_author attribute. This is used in the HTML head element.
 #
@@ -49,24 +49,12 @@ nav = [
   { "Installation" = "user_guide/installation.md" },
   { "User Guide" = [
     { "Quick Start" = "user_guide/quick_start.md" },
-    { "Project Structure" = "user_guide/project_structure.md" },
-    { "Development Tools" = "user_guide/development_tools.md" },
-    { "Testing" = "user_guide/testing.md" },
-    { "Documentation" = "user_guide/documentation.md" },
-    { "CI/CD" = "user_guide/ci_cd.md" },
-    { "Packaging" = "user_guide/packaging.md" },
-    { "Customization" = "user_guide/customization.md" },
-  ] },
-  { "Development" = [
-    { "Code Quality" = "dev/code_quality.md" },
-    { "Changelog" = "dev/changelog.md" },
   ] },
   { "Security" = "security.md" },
   { "Contributing" = "contributing.md" },
   { "Troubleshooting" = "dev/troubleshooting.md" },
   { "API" = [
     { "Overview" = "api/index.md" },
-    { "Hello World" = "api/hello_world.md" },
     { "Utility" = [
       { "Overview" = "api/utils/index.md" },
       { "Logging" = "api/utils/log.md" },

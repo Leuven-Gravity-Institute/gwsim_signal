@@ -3,9 +3,9 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "python_package_template"
+name = "gwsim-signal"
 authors = [{ name = "Isaac C. F. Wong" }]
-description = "A GitHub template repository for a Python package"
+description = "A Python package for simulating gravitational wave signals"
 readme = "README.md"
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -31,25 +31,25 @@ test = [
   "pytest>=9.0.2",
 ]
 ci = ["pytest-github-actions-annotate-failures>=0.4.0"]
-dev = ["pre-commit>=4.5.1", "python_package_template[test,docs]"]
+dev = ["pre-commit>=4.5.1", "gwsim-signal[test,docs]"]
 docs = ["zensical>=0.0.24", "mkdocstrings-python>=2.0.3"]
 build = ["hatch>=1.16.5"]
 
 [project.scripts]
-python_package_template = "python_package_template.cli.main:app"
+gwsim_signal = "gwsim_signal.cli.main:app"
 
 [project.urls]
-Documentation = "https://isaac-cf-wong.github.io/python-package-template"
-Source = "https://github.com/isaac-cf-wong/python-package-template"
-Tracker = "https://github.com/isaac-cf-wong/python-package-template/issues"
-Home = "https://github.com/isaac-cf-wong/python-package-template"
-"Release Notes" = "https://github.com/isaac-cf-wong/python-package-template/releases"
+Documentation = "https://leuven-gravity-institute.github.io/gwsim_signal"
+Source = "https://github.com/Leuven-Gravity-Institute/gwsim_signal"
+Tracker = "https://github.com/Leuven-Gravity-Institute/gwsim_signal/issues"
+Home = "https://github.com/Leuven-Gravity-Institute/gwsim_signal"
+"Release Notes" = "https://github.com/Leuven-Gravity-Institute/gwsim_signal/releases"
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/python_package_template"]
+packages = ["src/gwsim_signal"]
 
 [tool.bandit]
 exclude_dirs = ["build", "dist", "tests", "scripts"]
@@ -109,7 +109,7 @@ commands =
 
 [tool.ruff]
 line-length = 120 # Matches Black's default
-target-version = "py310" # Align with CI (3.10–3.12) and requires-python (>=3.10)
+target-version = "py312" # Align with CI (3.12–3.14) and requires-python (>=3.12)
 lint.extend-select = [
   "E",
   "F",

@@ -1,4 +1,4 @@
-# Python package template
+# gwsim_signal
 
 This is the documentation for using this Python package template.
 
@@ -8,6 +8,6 @@ This is the documentation for using this Python package template.
   instructions
 - [User Guide](user_guide/quick_start.md) - How to use the template
 - [API Reference](api/index.md) - Detailed API documentation
-- [Developer Guide](CONTRIBUTING.md) - How to contribute to the project
+- [Developer Guide](contributing.md) - How to contribute to the project
 - [Troubleshooting](dev/troubleshooting.md) - Identify and resolve common
   problems
