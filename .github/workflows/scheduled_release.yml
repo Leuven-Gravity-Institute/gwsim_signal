@@ -27,7 +27,7 @@ jobs:
 
             - name: Check for new commits
               id: check_commits
-              uses: isaac-cf-wong/detect-git-changes-action@v0.0.2
+              uses: isaac-cf-wong/detect-git-changes-action@ab5442ed5879e2d9971e50cce065c7d81490e133 # v0.0.2
 
             - name: Bump version and push tag
               if: steps.check_commits.outputs.has-changes == 'true'
