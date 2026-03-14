@@ -32,7 +32,7 @@ test = [
 ]
 ci = ["pytest-github-actions-annotate-failures>=0.4.0"]
 dev = ["pre-commit>=4.5.1", "gwsim-signal[test,docs]"]
-docs = ["zensical>=0.0.24", "mkdocstrings-python>=2.0.3"]
+docs = ["zensical>=0.0.26", "mkdocstrings-python>=2.0.3"]
 build = ["hatch>=1.16.5"]
 
 [project.scripts]
