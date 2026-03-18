@@ -10,7 +10,7 @@ readme = "README.md"
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
+  "License :: OSI Approved :: BSD-3-Clause)",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -31,12 +31,12 @@ test = [
   "pytest>=9.0.2",
 ]
 ci = ["pytest-github-actions-annotate-failures>=0.4.0"]
-dev = ["pre-commit>=4.5.1", "gwsim-signal[test,docs]"]
+dev = ["gwsim-signal[test,docs]"]
 docs = ["zensical>=0.0.27", "mkdocstrings-python>=2.0.3"]
 build = ["hatch>=1.16.5"]
 
 [project.scripts]
-gwsim_signal = "gwsim_signal.cli.main:app"
+gwsim-signal = "gwsim_signal.cli.main:app"
 
 [project.urls]
 Documentation = "https://leuven-gravity-institute.github.io/gwsim_signal"
