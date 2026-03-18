@@ -1,6 +1,6 @@
-# Contributing to gwsim_signal
+# Contributing to gwsim-signal
 
-🎉 Thank you for your interest in contributing to `gwsim_signal`! Your ideas,
+🎉 Thank you for your interest in contributing to `gwsim-signal`! Your ideas,
 fixes, and improvements are welcome and appreciated.
 
 Whether you’re fixing a typo, reporting a bug, suggesting a feature, or
@@ -21,12 +21,12 @@ submitting a pull request—this guide will help you get started.
 
     ```shell
     git clone git@github.com:<username>/gwsim_signal.git
-    cd gwsim_signal
+    cd gwsim-signal
     ```
 
 3. Set Up Your Environment
 
-    We recommend using uv to manage virtual environments for installing `gwsim_signal`.
+    We recommend using uv to manage virtual environments for installing `gwsim-signal`.
     If you don't have uv installed, you can install it with pip. See the project pages for more details:
 
     - Install via pip: `pip install --upgrade pip && pip install uv`
@@ -35,9 +35,9 @@ submitting a pull request—this guide will help you get started.
 
     ```shell
     # Create a virtual environment (recommended with uv)
-    uv venv --python 3.10
+    uv venv --python 3.11
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    pip install -e ".[dev]"
+    uv sync --extra dev
     ```
 
 4. Set Up Pre-commit Hooks and Commitlint
@@ -47,22 +47,18 @@ submitting a pull request—this guide will help you get started.
     After installing dependencies, run:
 
     ```shell
-    pre-commit install
-    pre-commit install --hook-type commit-msg
+    uv run pre-commit install
+    uv run  pre-commit install --hook-type commit-msg
     ```
 
     This ensures checks like code formatting, linting, and basic hygiene run automatically when you commit.
 
     ```shell
-    npm install
+    npm ci
     ```
 
     The project includes a `commitlint.config.js` configuration file that defines the commit message rules.
     Once installed, commitlint will automatically validate your commit messages when pre-commit runs.
-
-    !!!important
-        Commit messages are validated in CI/CD pipelines, and the changelog is auto-generated from commits.
-        See section [Commit Message Guidelines](#commit-message-guidelines) below for details.
 
 5. Create a New Branch
 
@@ -81,7 +77,7 @@ submitting a pull request—this guide will help you get started.
     Ensure that all tests pass before opening a pull request:
 
     ```shell
-    pytest
+    uv run pytest
     ```
 
 8. Open a Pull Request
@@ -89,75 +85,16 @@ submitting a pull request—this guide will help you get started.
     Clearly describe the motivation and scope of your change. Link it to the relevant issue if applicable.
     The pull request titles should match the [Conventional Commits spec](https://www.conventionalcommits.org/).
 
-<!-- prettier-ignore-end -->
+    **Pull request guidelines:**
 
-## Commit Message Guidelines
-
-**Why this matters:** Our changelog is automatically generated from commit
-messages using git-cliff. Commit messages must follow the Conventional Commits
-format and adhere to strict rules.
-
-### Rules
-
-<!-- prettier-ignore-start -->
-
-1. **One type of change per commit**
-
-    - Do not mix different types of changes (e.g., bug fixes, features, refactoring) in a single commit.
-    - Example: if you refactor code AND add a feature, make two separate commits.
-
-2. **Descriptive and meaningful messages**
-
-    - Describe _what_ changed and _why_, not just _what_ was edited.
-    - Avoid vague messages like "fix bug" or "update code";
-      instead use "fix: prevent signal saturation in noise simulation" or "feat: add support for multi-detector frame merging".
-
-3. **Follow Conventional Commits format**
-
-    - All commit messages must follow the [Conventional Commits](https://www.conventionalcommits.org/) standard.
-    - Format: `<type>(<scope>): <subject>`
-    - Allowed types:
-        - build: Changes that affect the build system or external dependencies
-        - ci: Changes to our CI configuration files and scripts
-        - docs: Documentation only changes
-        - feat: A new feature
-        - fix: A bug fix
-        - perf: A code change that improves performance
-        - refactor: A code change that neither fixes a bug nor adds a feature
-        - style: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc.)
-        - test: Adding missing tests or correcting existing tests
-    - Example:
-
-        ```text
-        feat(signal): add BBH waveform generation for aligned-spin systems
-
-        This commit introduces support for aligned-spin binary black hole
-        waveforms using PyCBC, enabling more realistic simulations.
-        ```
-
-    - Commitlint will validate your message format automatically.
+    - Always use the provided [pull request template](.github/PULL_REQUEST_TEMPLATE/pull_request_template.md)
+        and complete all relevant sections.
+    - The pull request title must follow the Conventional Commits format, using the appropriate type prefix
+        (for example, `feat:`, `fix:`, `docs:`, `refactor:`).
+    - Keep each pull request focused on a single type of change (for example, do not mix refactoring with new
+        features or documentation-only changes in the same PR).
 
 <!-- prettier-ignore-end -->
-
-### Examples
-
-✅ **Good commits:**
-
-```text
-feat(parser): add support for YAML configuration files
-fix(logger): prevent crash on empty log messages
-docs(readme): update installation instructions for clarity
-refactor(utils): simplify data processing pipeline
-```
-
-❌ **Bad commits:**
-
-```text
-fixed stuff
-wip: many changes
-update code
-more fixes (no type/scope)
-```
 
 ## 💡 Tips
 
@@ -169,10 +106,10 @@ more fixes (no type/scope)
 ## Licensing
 
 By contributing, you agree that your contributions will be licensed under the
-project’s MIT License.
+project’s 3-Clause BSD License.
 
 ---
 
-Thanks again for being part of the `gwsim_signal` community!
+Thanks again for being part of the `gwsim-signal` community!
 
 ---
