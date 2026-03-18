@@ -28,13 +28,14 @@ pages for more details:
 
 ### Requirements
 
-- Python 3.11 or higher
+- Python 3.12 or higher (We adopt the SPEC 0 policy for the Python support
+  version)
 - Operating System: Linux, macOS, or Windows
 
-**Note:** The package is built and tested against Python 3.11-3.14. When
+**Note:** The package is built and tested against Python 3.12-3.14. When
 creating a virtual environment with `uv`, specify the Python version to ensure
-compatibility: `uv venv --python 3.11` (replace `3.11` with your preferred
-version in the 3.11-3.14 range). This avoids potential issues with unsupported
+compatibility: `uv venv --python 3.12` (replace `3.12` with your preferred
+version in the 3.12-3.14 range). This avoids potential issues with unsupported
 Python versions.
 
 ### Install from PyPI
@@ -43,7 +44,7 @@ The recommended way to install `gwsim_signal` is from PyPI:
 
 ```bash
 # Create a virtual environment (recommended with uv)
-uv venv --python 3.13
+uv venv --python 3.12
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install gwsim_signal
 ```
@@ -68,7 +69,7 @@ For the latest development version:
 git clone git@github.com:Leuven-Gravity-Institute/gwsim_signal.git
 cd gwsim_signal
 # Create a virtual environment (recommended with uv)
-uv venv --python 3.13
+uv venv --python 3.12
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv sync
 ```
@@ -82,7 +83,7 @@ git clone git@github.com:Leuven-Gravity-Institute/gwsim_signal.git
 cd gwsim_signal
 
 # Create a virtual environment (recommended with uv)
-uv venv --python 3.10
+uv venv --python 3.12
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv sync --extra dev
 
@@ -99,7 +100,7 @@ uv run pre-commit install --hook-type commit-msg
 Check that `gwsim_signal` is installed correctly:
 
 ```bash
-gwsim_signal --help
+gwsim-signal --help
 ```
 
 ```bash
@@ -133,13 +134,13 @@ for critical issues. Users can view upcoming changes in the draft release on the
 Run the test suite:
 
 ```bash
-pytest
+uv run pytest
 ```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
-for details.
+This project is licensed under the BSD 3-Clause License - see the
+[LICENSE](LICENSE) file for details.
 
 ## Support
 
