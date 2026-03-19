@@ -52,14 +52,22 @@ class WaveformFactory:
         Raises:
             ImportError: If a string path does not refer to an importable module.
             AttributeError: If the imported module has no such callable attribute.
+            ValueError: If factory_func string is neither 'module.path:callable' nor 'package.module.callable'.
+            TypeError: Registered model is not callable.
         """
         if isinstance(factory_func, str):
             if ":" in factory_func:
                 module_path, func_name = factory_func.split(":", 1)
             else:
+                if "." not in factory_func:
+                    raise ValueError("factory_func string must be 'module.path:callable' or 'package.module.callable'")
                 module_path, func_name = factory_func.rsplit(".", 1)
             module = importlib.import_module(module_path)
             factory_func = getattr(module, func_name)
+
+        if not callable(factory_func):
+            raise TypeError(f"Registered model '{name}' is not callable")
+
         self._models[name] = factory_func
         logger.info("Registered waveform model: %s", name)
 
