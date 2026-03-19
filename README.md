@@ -28,11 +28,12 @@ pages for more details:
 
 ### Requirements
 
-- Python 3.12 or higher (We adopt the SPEC 0 policy for the Python support
-  version)
-- Operating System: Linux, macOS, or Windows
+- Python 3.12-3.13 (We adopt the SPEC 0 policy for the Python support version)
+- We do not support Python 3.14 because `lalsuite` does not have a wheel for
+  Python 3.14 yet ([#825](https://git.ligo.org/lscsoft/lalsuite/-/issues/825))
+- Operating System: Linux, or macOS
 
-**Note:** The package is built and tested against Python 3.12-3.14. When
+**Note:** The package is built and tested against Python 3.12-3.13. When
 creating a virtual environment with `uv`, specify the Python version to ensure
 compatibility: `uv venv --python 3.12` (replace `3.12` with your preferred
 version in the 3.12-3.14 range). This avoids potential issues with unsupported
