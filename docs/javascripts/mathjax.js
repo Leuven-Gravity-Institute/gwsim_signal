@@ -11,9 +11,13 @@ window.MathJax = {
     },
 }
 
-document$.subscribe(() => {
+document$.subscribe(async () => {
+    if (!window.MathJax?.startup?.promise || !window.MathJax?.startup?.output) {
+        return
+    }
+    await window.MathJax.startup.promise
     MathJax.startup.output.clearCache()
     MathJax.typesetClear()
     MathJax.texReset()
-    MathJax.typesetPromise()
+    await MathJax.typesetPromise()
 })
