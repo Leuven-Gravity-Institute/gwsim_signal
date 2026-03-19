@@ -74,4 +74,5 @@ gwsim
 gwmock
 gwpy
 pycbc
-approximants
+approximant
+astropy
