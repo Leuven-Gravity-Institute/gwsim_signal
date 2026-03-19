@@ -5,10 +5,8 @@ description: Utility functions.
 
 <!-- prettier-ignore-start -->
 
-::: python_package_template.utils
+::: gwmock_signal.utils
     options:
-        members:
-            - hello
         show_root_heading: false
         heading_level: 2
         inherited_members: true

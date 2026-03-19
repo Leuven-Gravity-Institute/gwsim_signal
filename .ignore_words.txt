@@ -76,3 +76,4 @@ gwpy
 pycbc
 approximant
 astropy
+approximants
