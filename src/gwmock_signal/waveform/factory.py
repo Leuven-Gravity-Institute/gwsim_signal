@@ -121,5 +121,7 @@ class WaveformFactory:
             TypeError: If the underlying generator is called with invalid arguments.
         """
         waveform_func = self.get_model(waveform_model)
-        all_params: dict[str, Any] = {"waveform_model": waveform_model, **parameters, **extra_params}
+        if "waveform_model" in parameters or "waveform_model" in extra_params:
+            raise ValueError("Do not pass 'waveform_model' in parameters/extra_params.")
+        all_params: dict[str, Any] = {**parameters, **extra_params, "waveform_model": waveform_model}
         return waveform_func(**all_params)
