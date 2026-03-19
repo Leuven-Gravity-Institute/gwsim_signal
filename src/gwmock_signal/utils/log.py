@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from gwsim_signal.version import __version__
+from gwmock_signal.version import __version__
 
 
 def get_version_information() -> str:
@@ -38,7 +38,7 @@ def setup_logger(
     else:
         level = int(log_level)
 
-    logger = logging.getLogger("gwsim_signal")
+    logger = logging.getLogger("gwmock_signal")
     logger.propagate = False
     logger.setLevel(level)
 
@@ -67,4 +67,4 @@ def setup_logger(
 
     if print_version:
         version = get_version_information()
-        logger.info("Running gwsim_signal version: %s", version)
+        logger.info("Running gwmock_signal version: %s", version)

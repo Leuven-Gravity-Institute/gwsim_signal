@@ -1,11 +1,11 @@
-# gwsim_signal
+# gwmock-signal
 
-[![Python CI](https://github.com/Leuven-Gravity-Institute/gwsim_signal/actions/workflows/ci.yml/badge.svg)](https://github.com/Leuven-Gravity-Institute/gwsim_signal/actions/workflows/ci.yml)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/Leuven-Gravity-Institute/gwsim_signal/main.svg)](https://results.pre-commit.ci/latest/github/Leuven-Gravity-Institute/gwsim_signal/main)
-[![Documentation Status](https://github.com/Leuven-Gravity-Institute/gwsim_signal/actions/workflows/documentation.yml/badge.svg)](https://leuven-gravity-institute.github.io/gwsim_signal/)
-[![codecov](https://codecov.io/gh/Leuven-Gravity-Institute/gwsim_signal/graph/badge.svg?token=COF8341N60)](https://codecov.io/gh/Leuven-Gravity-Institute/gwsim_signal)
-[![PyPI Version](https://img.shields.io/pypi/v/gwsim_signal)](https://pypi.org/project/gwsim_signal/)
-[![Python Versions](https://img.shields.io/pypi/pyversions/gwsim_signal)](https://pypi.org/project/gwsim_signal/)
+[![Python CI](https://github.com/Leuven-Gravity-Institute/gwmock-signal/actions/workflows/ci.yml/badge.svg)](https://github.com/Leuven-Gravity-Institute/gwmock-signal/actions/workflows/ci.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/Leuven-Gravity-Institute/gwmock-signal/main.svg)](https://results.pre-commit.ci/latest/github/Leuven-Gravity-Institute/gwmock-signal/main)
+[![Documentation Status](https://github.com/Leuven-Gravity-Institute/gwmock-signal/actions/workflows/documentation.yml/badge.svg)](https://leuven-gravity-institute.github.io/gwmock-signal/)
+[![codecov](https://codecov.io/gh/Leuven-Gravity-Institute/gwmock-signal/graph/badge.svg?token=COF8341N60)](https://codecov.io/gh/Leuven-Gravity-Institute/gwmock-signal)
+[![PyPI Version](https://img.shields.io/pypi/v/gwmock-signal)](https://pypi.org/project/gwmock-signal/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/gwmock-signal)](https://pypi.org/project/gwmock-signal/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![DOI](https://zenodo.org/badge/924023559.svg)](https://doi.org/10.5281/zenodo.18017404)
@@ -16,7 +16,7 @@ A Python package for simulating gravitational wave signals.
 ## Installation
 
 We recommend using `uv` to manage virtual environments for installing
-`gwsim_signal`.
+`gwmock-signal`.
 
 If you don't have `uv` installed, you can install it with pip. See the project
 pages for more details:
@@ -40,13 +40,13 @@ Python versions.
 
 ### Install from PyPI
 
-The recommended way to install `gwsim_signal` is from PyPI:
+The recommended way to install `gwmock-signal` is from PyPI:
 
 ```bash
 # Create a virtual environment (recommended with uv)
 uv venv --python 3.12
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install gwsim_signal
+uv pip install gwmock-signal
 ```
 
 #### Optional Dependencies
@@ -55,10 +55,10 @@ For development or specific features:
 
 ```bash
 # Development dependencies (testing, linting, etc.)
-uv pip install gwsim_signal[dev]
+uv pip install gwmock-signal[dev]
 
 # Documentation dependencies
-uv pip install gwsim_signal[docs]
+uv pip install gwmock-signal[docs]
 ```
 
 ### Install from Source
@@ -66,8 +66,8 @@ uv pip install gwsim_signal[docs]
 For the latest development version:
 
 ```bash
-git clone git@github.com:Leuven-Gravity-Institute/gwsim_signal.git
-cd gwsim_signal
+git clone git@github.com:Leuven-Gravity-Institute/gwmock-signal.git
+cd gwmock-signal
 # Create a virtual environment (recommended with uv)
 uv venv --python 3.12
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
@@ -79,8 +79,8 @@ uv sync
 To set up for development:
 
 ```bash
-git clone git@github.com:Leuven-Gravity-Institute/gwsim_signal.git
-cd gwsim_signal
+git clone git@github.com:Leuven-Gravity-Institute/gwmock-signal.git
+cd gwmock-signal
 
 # Create a virtual environment (recommended with uv)
 uv venv --python 3.12
@@ -97,20 +97,20 @@ uv run pre-commit install --hook-type commit-msg
 
 ### Verify Installation
 
-Check that `gwsim_signal` is installed correctly:
+Check that `gwmock-signal` is installed correctly:
 
 ```bash
-gwsim-signal --help
+gwmock-signal --help
 ```
 
 ```bash
-python -c "import gwsim_signal; print(gwsim_signal.__version__)"
+python -c "import gwmock_signal; print(gwmock_signal.__version__)"
 ```
 
 ## Documentation
 
 Full documentation to be available at
-[https://leuven-gravity-institute.github.io/gwsim_signal](https://leuven-gravity-institute.github.io/gwsim_signal).
+[https://leuven-gravity-institute.github.io/gwmock-signal](https://leuven-gravity-institute.github.io/gwmock-signal).
 
 ## Contributing
 
@@ -127,7 +127,7 @@ Contributions are welcome!
 Releases follow a fixed schedule: every Tuesday at 00:00 UTC, unless an emergent
 bugfix is required. This ensures predictable updates while allowing flexibility
 for critical issues. Users can view upcoming changes in the draft release on the
-[GitHub Releases page](https://github.com/Leuven-Gravity-Institute/gwsim_signal/releases).
+[GitHub Releases page](https://github.com/Leuven-Gravity-Institute/gwmock-signal/releases).
 
 ## Testing
 
@@ -145,5 +145,5 @@ This project is licensed under the BSD 3-Clause License - see the
 ## Support
 
 For questions or issues, please open an issue on
-[GitHub](https://github.com/Leuven-Gravity-Institute/gwsim_signal/issues/new) or
-contact the maintainers.
+[GitHub](https://github.com/Leuven-Gravity-Institute/gwmock-signal/issues/new)
+or contact the maintainers.
