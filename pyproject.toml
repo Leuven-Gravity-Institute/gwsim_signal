@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "gwsim-signal"
+name = "gwmock-signal"
 authors = [{ name = "Isaac C. F. Wong" }]
 description = "A Python package for simulating gravitational wave signals"
 readme = "README.md"
@@ -31,25 +31,25 @@ test = [
   "pytest>=9.0.2",
 ]
 ci = ["pytest-github-actions-annotate-failures>=0.4.0"]
-dev = ["gwsim-signal[test,docs]"]
+dev = ["gwmock-signal[test,docs]"]
 docs = ["zensical>=0.0.27", "mkdocstrings-python>=2.0.3"]
 build = ["hatch>=1.16.5"]
 
 [project.scripts]
-gwsim-signal = "gwsim_signal.cli.main:app"
+gwmock-signal = "gwmock_signal.cli.main:app"
 
 [project.urls]
-Documentation = "https://leuven-gravity-institute.github.io/gwsim_signal"
-Source = "https://github.com/Leuven-Gravity-Institute/gwsim_signal"
-Tracker = "https://github.com/Leuven-Gravity-Institute/gwsim_signal/issues"
-Home = "https://github.com/Leuven-Gravity-Institute/gwsim_signal"
-"Release Notes" = "https://github.com/Leuven-Gravity-Institute/gwsim_signal/releases"
+Documentation = "https://leuven-gravity-institute.github.io/gwmock-signal"
+Source = "https://github.com/Leuven-Gravity-Institute/gwmock-signal"
+Tracker = "https://github.com/Leuven-Gravity-Institute/gwmock-signal/issues"
+Home = "https://github.com/Leuven-Gravity-Institute/gwmock-signal"
+"Release Notes" = "https://github.com/Leuven-Gravity-Institute/gwmock-signal/releases"
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/gwsim_signal"]
+packages = ["src/gwmock_signal"]
 
 [tool.bandit]
 exclude_dirs = ["build", "dist", "tests", "scripts"]

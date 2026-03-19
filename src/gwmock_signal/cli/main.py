@@ -1,5 +1,5 @@
 # ruff: noqa PL0415
-"""Main entry point for the gwsim_signal CLI application."""
+"""Main entry point for the gwmock_signal CLI application."""
 
 from __future__ import annotations
 
@@ -22,8 +22,8 @@ class LoggingLevel(str, enum.Enum):
 
 # Create the main Typer app
 app = typer.Typer(
-    name="gwsim_signal",
-    help="Main CLI for gwsim_signal.",
+    name="gwmock_signal",
+    help="Main CLI for gwmock_signal.",
     rich_markup_mode="rich",
 )
 
@@ -39,7 +39,7 @@ def setup_logging(level: LoggingLevel = LoggingLevel.INFO) -> None:
     from rich.console import Console
     from rich.logging import RichHandler
 
-    logger = logging.getLogger("gwsim_signal")
+    logger = logging.getLogger("gwmock_signal")
 
     logger.setLevel(level.value)
 

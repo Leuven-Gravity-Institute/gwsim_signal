@@ -58,7 +58,7 @@ render_always = true
 # An array of regex based postprocessors to modify the changelog.
 postprocessors = [
   # Replace the placeholder <REPO> with a URL.
-  { pattern = '<REPO>', replace = 'https://github.com/Leuven-Gravity-Institute/gwsim_signal' },
+  { pattern = '<REPO>', replace = 'https://github.com/Leuven-Gravity-Institute/gwmock-signal' },
 ]
 
 [git]

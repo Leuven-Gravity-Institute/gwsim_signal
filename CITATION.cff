@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 title:
-    'gwsim_signal: A Python pacakge for simulating gravitational wave signals'
+    'gwmock-signal: A Python package for simulating gravitational wave signals'
 license: 'MIT'
 type: software
 authors:

@@ -1,3 +1,3 @@
 # Quick Start
 
-Welcome to the **gwsim_signal** documentation!
+Welcome to the **gwmock_signal** documentation!

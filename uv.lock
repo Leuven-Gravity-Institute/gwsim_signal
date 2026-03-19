@@ -350,7 +350,7 @@ wheels = [
 ]
 
 [[package]]
-name = "gwsim-signal"
+name = "gwmock-signal"
 source = { editable = "." }
 dependencies = [
     { name = "typer" },

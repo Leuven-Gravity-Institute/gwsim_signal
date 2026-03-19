@@ -1,7 +1,7 @@
 # Installation
 
 We recommend using `uv` to manage virtual environments for installing
-`gwsim_signal`.
+`gwmock_signal`.
 
 If you don't have `uv` installed, you can install it with pip. See the project
 pages for more details:
@@ -27,13 +27,13 @@ pages for more details:
 
 ## Install from PyPI
 
-The recommended way to install `gwsim_signal` is from PyPI:
+The recommended way to install `gwmock_signal` is from PyPI:
 
 ```bash
 # Create a virtual environment (recommended with uv)
 uv venv --python 3.12
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install gwsim-signal
+uv pip install gwmock-signal
 ```
 
 ### Optional Dependencies
@@ -42,13 +42,13 @@ For development or specific features:
 
 ```bash
 # Development dependencies (testing, linting, etc.)
-uv pip install gwsim-signal[dev]
+uv pip install gwmock-signal[dev]
 
 # Documentation dependencies
-uv pip install gwsim-signal[docs]
+uv pip install gwmock-signal[docs]
 
 # All dependencies
-uv pip install gwsim-signal[dev,docs]
+uv pip install gwmock-signal[dev,docs]
 ```
 
 ## Install from Source
@@ -56,8 +56,8 @@ uv pip install gwsim-signal[dev,docs]
 For the latest development version:
 
 ```bash
-git clone git@github.com:Leuven-Gravity-Institute/gwsim_signal.git
-cd gwsim_signal
+git clone git@github.com:Leuven-Gravity-Institute/gwmock_signal.git
+cd gwmock_signal
 # Create a virtual environment (recommended with uv)
 uv venv --python 3.12
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
@@ -69,8 +69,8 @@ uv sync
 To set up for development:
 
 ```bash
-git clone git@github.com:Leuven-Gravity-Institute/gwsim_signal.git
-cd gwsim_signal
+git clone git@github.com:Leuven-Gravity-Institute/gwmock_signal.git
+cd gwmock_signal
 
 # Create a virtual environment (recommended with uv)
 uv venv --python 3.12
@@ -87,14 +87,14 @@ uv run pre-commit install --hook-type commit-msg
 
 ## Verify Installation
 
-Check that `gwsim_signal` is installed correctly:
+Check that `gwmock_signal` is installed correctly:
 
 ```bash
-gwsim_signal --help
+gwmock_signal --help
 ```
 
 ```bash
-python -c "import gwsim_signal; print(gwsim_signal.__version__)"
+python -c "import gwmock_signal; print(gwmock_signal.__version__)"
 ```
 
 ## Dependencies
@@ -108,7 +108,7 @@ python -c "import gwsim_signal; print(gwsim_signal.__version__)"
 <!-- prettier-ignore-start -->
 
 1. Check the [troubleshooting guide](../dev/troubleshooting.md)
-2. Search existing [issues](https://github.com/Leuven-Gravity-Institute/gwsim_signal/issues)
+2. Search existing [issues](https://github.com/Leuven-Gravity-Institute/gwmock_signal/issues)
 3. Create a new issue with:
     - Your operating system and Python version
     - Full error message
