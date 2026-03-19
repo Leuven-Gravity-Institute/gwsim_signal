@@ -77,3 +77,4 @@ pycbc
 approximant
 astropy
 approximants
+lalsuite
