@@ -19,8 +19,8 @@ requires-python = ">=3.12,<3.14"
 dynamic = ["version"]
 dependencies = [
   "typer>=0.24.1",
-  "numpy>=1.26.4",
-  "gwpy>=3.0.14",
+  "numpy>=2.4.3",
+  "gwpy>=4.0.1",
   "pycbc>=2.10.0",
 ]
 
