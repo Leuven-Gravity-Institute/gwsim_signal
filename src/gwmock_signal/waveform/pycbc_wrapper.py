@@ -36,9 +36,15 @@ def pycbc_waveform_wrapper(
         Mapping whose keys are the strings ``plus`` and ``cross``; each value is a
         GWpy :class:`gwpy.timeseries.TimeSeries`.
 
+    Raises:
+        ValueError: sampling_frequency must be > 0.
+
     Note:
         Invalid parameters may raise exceptions from PyCBC/LAL; see PyCBC waveform docs.
     """
+    if sampling_frequency <= 0:
+        raise ValueError("sampling_frequency must be > 0")
+
     hp, hc = get_td_waveform(
         approximant=waveform_model,
         delta_t=1 / sampling_frequency,
