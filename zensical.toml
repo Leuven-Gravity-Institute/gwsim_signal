@@ -50,6 +50,7 @@ nav = [
   { "User Guide" = [
     { "Quick Start" = "user_guide/quick_start.md" },
     { "Waveform generation" = "user_guide/waveform.md" },
+    { "Detector strain projection" = "user_guide/detector-projection.md" },
   ] },
   { "Security" = "security.md" },
   { "Contributing" = "contributing.md" },
@@ -57,6 +58,7 @@ nav = [
   { "API" = [
     { "Overview" = "api/index.md" },
     { "Waveform" = "api/waveform/index.md" },
+    { "Projection" = "api/projection/index.md" },
     { "Utility" = [
       { "Overview" = "api/utils/index.md" },
       { "Logging" = "api/utils/log.md" },
