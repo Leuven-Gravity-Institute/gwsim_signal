@@ -49,12 +49,14 @@ nav = [
   { "Installation" = "user_guide/installation.md" },
   { "User Guide" = [
     { "Quick Start" = "user_guide/quick_start.md" },
+    { "Waveform generation" = "user_guide/waveform.md" },
   ] },
   { "Security" = "security.md" },
   { "Contributing" = "contributing.md" },
   { "Troubleshooting" = "dev/troubleshooting.md" },
   { "API" = [
     { "Overview" = "api/index.md" },
+    { "Waveform" = "api/waveform/index.md" },
     { "Utility" = [
       { "Overview" = "api/utils/index.md" },
       { "Logging" = "api/utils/log.md" },
@@ -71,6 +73,11 @@ nav = [
 # Read more: https://zensical.org/docs/customization/#additional-css
 #
 #extra_css = ["stylesheets/extra.css"]
+
+extra_javascript = [
+  "javascripts/mathjax.js",
+  "https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js",
+]
 
 # With the `extra_javascript` option you can add your own JavaScript to your
 # project to customize the behavior according to your needs.

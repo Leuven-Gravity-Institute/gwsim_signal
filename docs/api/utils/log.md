@@ -5,7 +5,7 @@ description: Logging functions.
 
 <!-- prettier-ignore-start -->
 
-::: python_package_template.utils.log
+::: gwmock_signal.utils.log
     options:
         show_root_heading: false
         heading_level: 2

@@ -72,3 +72,9 @@ taplo
 Zensical
 gwsim
 gwmock
+gwpy
+pycbc
+approximant
+astropy
+approximants
+lalsuite
