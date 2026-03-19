@@ -7,8 +7,8 @@ description:
 
 ## Waveform generation
 
-Generate **time-domain gravitational-wave polarizations** \(h*{+}\) and
-\(h*{\times}\) for compact-binary and other sources supported by
+Generate **time-domain gravitational-wave polarizations** $h_{+}$ and
+$h_{\times}$ for compact-binary and other sources supported by
 [PyCBC](https://pycbc.org/) time-domain approximants, and return them as
 [GWpy](https://gwpy.github.io)
 [`TimeSeries`](https://gwpy.github.io/docs/latest/api/gwpy.timeseries.TimeSeries/)
