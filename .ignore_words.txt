@@ -82,3 +82,5 @@ interp
 geocenter
 unconfigured
 rtol
+xspan
+LIGO
