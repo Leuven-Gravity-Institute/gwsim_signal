@@ -8,7 +8,7 @@ description:
 After generating **plus** and **cross** polarizations (see
 [Waveform generation](waveform.md)), the next step in many pipelines is to
 compute the **strain in each interferometer** using the detector **antenna
-patterns** \(F*+, F*\times\) and **geometric time delays** relative to the
+patterns** $F_{+}$, $F_{\times}$ and **geometric time delays** relative to the
 geocenter. This is required for **injection into multi-detector data**,
 **end-to-end simulations**, and cross-checks with **matched filtering** that use
 the same sky location and polarization as the search.
@@ -118,9 +118,9 @@ strains = project_polarizations_to_network(
 ## Example 3 — Custom detector list from configuration (advanced)
 
 Some analyses use custom **interferometer geometry** from `.interferometer`
-config files (e.g. Einstein Telescope configurations). The implementation may
-accept optional paths or detector objects in addition to built-in names; see the
-API reference when available.
+config files (e.g. Einstein Telescope configurations). Custom detector objects
+or config-path based loading are not part of the current public API; if added
+later, they will be documented in the API reference.
 
 ```python
 # Illustrative only — exact keyword names TBD in API reference.

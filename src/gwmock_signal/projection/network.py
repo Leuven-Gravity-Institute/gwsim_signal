@@ -25,7 +25,10 @@ def _validate_polarizations(polarizations: Mapping[str, GWpyTimeSeries]) -> tupl
         raise ValueError(f"plus and cross must have the same number of samples; got {len(hp)} and {len(hc)}.")
     if hp.sample_rate != hc.sample_rate:
         raise ValueError("plus and cross must have the same sample rate.")
-    if not np.allclose(hp.times.value, hc.times.value):
+    hp_times = np.asarray(hp.times.value, dtype=float)
+    hc_times = np.asarray(hc.times.value, dtype=float)
+    dt = float(hp.dt.value)
+    if not np.allclose(hp_times, hc_times, rtol=0.0, atol=max(np.finfo(float).eps, 0.5 * dt)):
         raise ValueError("plus and cross must share the same time samples (same t0, dt, and length).")
     return hp, hc
 
@@ -82,23 +85,29 @@ def project_polarizations_to_network(  # noqa: PLR0913
             is not recognized by PyCBC.
     """
     hp, hc = _validate_polarizations(polarizations)
-    detectors = _make_detectors(detector_names)
+    normalized_names = [str(n) for n in detector_names]
+    if len(set(normalized_names)) != len(normalized_names):
+        raise ValueError("detector_names must not contain duplicates.")
+    detectors = _make_detectors(normalized_names)
 
     time_array = cast(np.ndarray, hp.times.to_value())
     reference_time = float(0.5 * (time_array[0] + time_array[-1]))
     time_array_wrt_reference = time_array - reference_time
 
+    minimum_number_of_data_points = 4
+    interp_kind = "cubic" if len(time_array_wrt_reference) >= minimum_number_of_data_points else "linear"
+
     hp_func = interp1d(
         time_array_wrt_reference,
         hp.to_value(),
-        kind="cubic",
+        kind=interp_kind,
         bounds_error=False,
         fill_value=0.0,
     )
     hc_func = interp1d(
         time_array_wrt_reference,
         hc.to_value(),
-        kind="cubic",
+        kind=interp_kind,
         bounds_error=False,
         fill_value=0.0,
     )
