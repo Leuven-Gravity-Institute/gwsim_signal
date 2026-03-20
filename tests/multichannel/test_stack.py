@@ -1,0 +1,68 @@
+"""Tests for ``DetectorStrainStack``."""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+from gwpy.timeseries import TimeSeries
+
+from gwmock_signal.multichannel import DetectorStrainStack
+
+
+def _ch(n: int = 8, fs: float = 128.0, t0: float = 0.0, fill: float = 1.0) -> TimeSeries:
+    return TimeSeries(np.full(n, fill), t0=t0, sample_rate=fs)
+
+
+def test_from_mapping_order_and_shape():
+    """Rows follow ``detector_names``; ``data`` has shape (n_det, n_samples)."""
+    h1 = _ch(fill=1.0)
+    l1 = _ch(fill=2.0)
+    strains = {"H1": h1, "L1": l1}
+    stack = DetectorStrainStack.from_mapping(["L1", "H1"], strains)
+    assert stack.detector_names == ("L1", "H1")
+    assert stack.data.shape == (2, 8)
+    assert np.allclose(stack.data[0], 2.0)
+    assert np.allclose(stack.data[1], 1.0)
+
+
+def test_getitem_name_is_same_as_index():
+    """String and integer access return the identical GWpy object."""
+    strains = {"H1": _ch(fill=3.0), "L1": _ch(fill=4.0)}
+    stack = DetectorStrainStack.from_mapping(["H1", "L1"], strains)
+    assert stack["H1"] is stack[0]
+    assert stack["L1"] is stack[1]
+
+
+def test_to_dict_keys():
+    """``to_dict`` contains all detectors."""
+    names = ["H1", "L1", "V1"]
+    strains = {n: _ch(fill=float(i)) for i, n in enumerate(names)}
+    stack = DetectorStrainStack.from_mapping(names, strains)
+    again = stack.to_dict()
+    assert set(again) == set(names)
+
+
+def test_missing_key_raises():
+    """Missing detector in mapping raises ``KeyError``."""
+    with pytest.raises(KeyError, match="Missing strain"):
+        DetectorStrainStack.from_mapping(["H1", "X1"], {"H1": _ch()})
+
+
+def test_mismatched_length_raises():
+    """Different lengths raise ``ValueError``."""
+    strains = {"H1": _ch(n=4), "L1": _ch(n=8)}
+    with pytest.raises(ValueError, match="length"):
+        DetectorStrainStack.from_mapping(["H1", "L1"], strains)
+
+
+def test_empty_detector_names_raises():
+    """Empty ``detector_names`` is rejected."""
+    with pytest.raises(ValueError, match="non-empty"):
+        DetectorStrainStack.from_mapping([], {"H1": _ch()})
+
+
+def test_unknown_name_getitem():
+    """Bad string key raises ``KeyError``."""
+    stack = DetectorStrainStack.from_mapping(["H1"], {"H1": _ch()})
+    with pytest.raises(KeyError):
+        _ = stack["V1"]
