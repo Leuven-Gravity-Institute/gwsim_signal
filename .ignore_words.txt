@@ -83,3 +83,4 @@ geocenter
 unconfigured
 rtol
 xspan
+LIGO
