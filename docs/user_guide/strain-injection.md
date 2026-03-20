@@ -36,7 +36,7 @@ def inject_strain(
     *,
     interpolate_if_offset: bool = True,
 ) -> TimeSeries:
-    """Add ``injection`` into ``target`` in-place on the time grid (new series returned).
+    """Add ``injection`` into ``target`` on the time grid (returns a new series).
 
     Both arguments must be compatible GWpy time series (same sample spacing and
     compatible epochs). The injection is **added** to the target samples where

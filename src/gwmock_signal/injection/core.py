@@ -43,7 +43,8 @@ def inject_strain(
     Raises:
         ValueError: If GWpy compatibility checks fail (units, sample rate, etc.).
     """
-    target.is_compatible(injection)
+    if not target.is_compatible(injection):
+        raise ValueError("Injection is not compatible with target (sample rate, units, or epoch mismatch).")
 
     other = injection
     if (target.xunit == second) and (other.xspan[0] < target.xspan[0]):
