@@ -6,6 +6,8 @@ MD013:
     headings: false
     # Allow code blocks to exceed line length
     code_blocks: false
+    # Allow tables to exceed line length
+    tables: false
 
 # Require ATX-style headings (# instead of = or -)
 MD003:

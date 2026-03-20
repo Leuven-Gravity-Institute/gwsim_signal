@@ -21,8 +21,9 @@ logger = logging.getLogger("gwmock_signal.waveform")
 class WaveformFactory:
     """Registry and dispatcher for time-domain waveform generators.
 
-    On construction, every name returned by :func:`pycbc.waveform.td_approximants` is
-    registered and mapped to :func:`~gwmock_signal.waveform.pycbc_wrapper.pycbc_waveform_wrapper`.
+    On construction, every name returned by PyCBC
+    [`td_approximants`](https://pycbc.org/pycbc/latest/html/waveform.html) is
+    registered and mapped to ``pycbc_waveform_wrapper``.
     You may register additional names pointing at custom callables. See package docs for examples.
     """
 
@@ -42,7 +43,7 @@ class WaveformFactory:
         """Register or overwrite a waveform model under ``name``.
 
         Args:
-            name: Key used with :meth:`generate` and :meth:`get_model`.
+            name: Key used with ``WaveformFactory.generate`` and ``WaveformFactory.get_model``.
             factory_func: Callable that accepts merged waveform kwargs (including
                 ``waveform_model``, ``tc``, ``sampling_frequency``, ``minimum_frequency``)
                 and returns a dict of GWpy ``plus``/``cross`` series, **or** an import
@@ -114,7 +115,7 @@ class WaveformFactory:
 
         Returns:
             Dict whose keys are the strings ``plus`` and ``cross``, each mapping to a
-            GWpy :class:`~gwpy.timeseries.TimeSeries`.
+            GWpy [`TimeSeries`](https://gwpy.github.io/docs/latest/api/gwpy.timeseries.TimeSeries/).
 
         Raises:
             ValueError: If ``waveform_model`` is not registered.

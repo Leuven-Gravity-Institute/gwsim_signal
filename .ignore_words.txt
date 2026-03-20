@@ -78,3 +78,7 @@ approximant
 astropy
 approximants
 lalsuite
+interp
+geocenter
+unconfigured
+rtol
