@@ -1,12 +1,12 @@
 ---
-title: Waveform
-description: Waveform generation API (pycbc_waveform_wrapper, WaveformFactory).
-icon: material/chart-bell-curve
+title: Multichannel
+description: Stacked per-detector GWpy strains.
+icon: material/view-grid
 ---
 
 <!-- prettier-ignore-start -->
 
-::: gwmock_signal.waveform
+::: gwmock_signal.multichannel
     options:
         show_root_heading: true
         heading_level: 2
@@ -17,5 +17,5 @@ icon: material/chart-bell-curve
 
 <!-- prettier-ignore-end -->
 
-For **usage examples**, see the
-[User guide — Waveform examples](../../user_guide/waveform.md).
+For **usage examples**, see
+[User guide — Multichannel strain examples](../../user_guide/multi-channel-strains.md).

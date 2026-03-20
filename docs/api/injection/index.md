@@ -18,4 +18,4 @@ icon: material/plus-box
 <!-- prettier-ignore-end -->
 
 For **usage examples**, see the
-[User Guide — Strain injection](../../user_guide/strain-injection.md).
+[User guide — Strain injection examples](../../user_guide/strain-injection.md).

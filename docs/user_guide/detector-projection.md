@@ -1,69 +1,32 @@
 ---
-title: Detector strain projection
+title: Detector projection examples
 description:
-    Examples for projecting GW polarizations onto ground-based detector
+    Example workflows for projecting GW polarizations onto ground-based detector
     networks.
 ---
 
+# Detector projection examples
+
 After generating **plus** and **cross** polarizations (see
-[Waveform generation](waveform.md)), the next step in many pipelines is to
-compute the **strain in each interferometer** using the detector **antenna
-patterns** $F_{+}$, $F_{\times}$ and **geometric time delays** relative to the
+[Waveforms](waveform.md)), the next step in many pipelines is to compute the
+**strain in each interferometer** using the detector **antenna patterns**
+\(F*{+}\), \(F*{\times}\) and **geometric time delays** relative to the
 geocenter. This is required for **injection into multi-detector data**,
 **end-to-end simulations**, and cross-checks with **matched filtering** that use
 the same sky location and polarization as the search.
 
-This guide shows typical usage of the projection API. **Exact signatures, types,
-and exceptions** are documented in the **[Projection API](../api/projection/)**
-(generated from docstrings).
+This page is **examples only**. **Signatures, parameter semantics, return types,
+and exceptions** for `project_polarizations_to_network` live exclusively in the
+**[Projection API](../api/projection/)** (generated from docstrings).
 
 <!-- markdownlint-disable -->
 
 !!! tip "API reference"
 
-    See **API → Projection** for `project_polarizations_to_network` and full parameter
-    documentation.
+    Use **API → Projection** for the full contract; the sections below are
+    narrative + runnable snippets.
 
 <!-- markdownlint-enable -->
-
-## Public API
-
-The package exposes:
-
-```python
-from collections.abc import Mapping, Sequence
-
-from gwpy.timeseries import TimeSeries
-
-
-def project_polarizations_to_network(
-    polarizations: Mapping[str, TimeSeries],
-    detector_names: Sequence[str],
-    *,
-    right_ascension: float,
-    declination: float,
-    polarization_angle: float,
-    earth_rotation: bool = True,
-) -> dict[str, TimeSeries]:
-    """Project h_+, h_× onto named detectors; return one GWpy TimeSeries per detector."""
-```
-
-- **`polarizations`**: must include keys `plus` and `cross`, each a GWpy
-  [`TimeSeries`](https://gwpy.github.io/docs/latest/api/gwpy.timeseries.TimeSeries/)
-  on a **common** time grid (same length, sample rate, and epoch up to the
-  projection shifts).
-- **`detector_names`**: IFO codes understood by PyCBC/LAL, e.g. `H1`, `L1`, `V1`
-  (see [PyCBC detector](https://pycbc.org/pycbc/latest/html/detector.html)
-  docs).
-- **Sky and orientation** (all in **radians**): right ascension \(\alpha\),
-  declination \(\delta\), polarization angle \(\psi\) (tensor modes).
-- **`earth_rotation`**: if `True`, evaluate antenna patterns over time (and
-  delays) consistently with the time series; if `False`, use a single reference
-  time (faster, approximate for short waveforms).
-
-**Return value:** mapping from detector name to **projected strain** as a GWpy
-`TimeSeries` (same sample rate as input; time ordering follows the
-implementation of delays and interpolation).
 
 ## Example 1 — Waveform then H1 / L1 / V1 projection
 
@@ -119,8 +82,8 @@ strains = project_polarizations_to_network(
 
 Some analyses use custom **interferometer geometry** from `.interferometer`
 config files (e.g. Einstein Telescope configurations). Custom detector objects
-or config-path based loading are not part of the current public API; if added
-later, they will be documented in the API reference.
+or config-path loading are **not** in the current release; when supported, they
+will appear in the **[Projection API](../api/projection/)** only.
 
 ```python
 # Illustrative only — exact keyword names TBD in API reference.
@@ -160,7 +123,9 @@ later, they will be documented in the API reference.
 
 ## See also
 
-- [Waveform generation](waveform.md) — produce `plus` / `cross`
-- [Projection API](../api/projection/) — `project_polarizations_to_network`
+- [User guide overview](index.md)
+- [Waveforms](waveform.md) — produce `plus` / `cross`
+- [Strain injection](strain-injection.md) — embed projected strain in a segment
+- [Projection API](../api/projection/)
 - [API overview](../api/index.md)
 - [Documentation home](../index.md)

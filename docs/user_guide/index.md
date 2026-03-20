@@ -1,0 +1,58 @@
+---
+title: User guide
+description:
+    Overview of gravitational-wave signal simulation workflows with
+    gwmock-signal.
+icon: material/book-open-page-variant
+---
+
+# User guide
+
+**gwmock-signal** provides small, composable building blocks for **time-domain
+GW signal simulation** in Python, aligned with **PyCBC**, **GWpy**, and typical
+LIGO/Virgo/KAGRA analysis habits. The parent **gwmock** package (separate repo)
+is intended to orchestrate full mock-data challenges; this library focuses on
+the physics-adjacent primitives.
+
+## Typical pipeline
+
+```mermaid
+flowchart LR
+    W[Waveforms] --> P[Projection]
+    P --> I[Injection]
+    I --> M[Multichannel]
+```
+
+Under **User guide → Examples** in the sidebar:
+
+1. **[Waveforms](waveform.md)** — Produce \(h*{+}\), \(h*{\times}\) with PyCBC;
+   optional registry for custom models.
+2. **[Detector projection](detector-projection.md)** — Map polarizations to each
+   IFO strain using antenna patterns and delays.
+3. **[Strain injection](strain-injection.md)** — Add simulated strain into a
+   longer GWpy segment (e.g. zeros or noise).
+4. **[Multichannel strains](multi-channel-strains.md)** — Stack per-detector
+   series in a fixed order for array-oriented code.
+
+Example pages are **narrative + copy-paste snippets**. **Authoritative API
+details** (signatures, types, exceptions) are only in **API** (auto-generated
+from docstrings):
+
+| Topic        | Examples (this site)                             | Reference (signatures & types)           |
+| ------------ | ------------------------------------------------ | ---------------------------------------- |
+| Waveforms    | [Waveforms](waveform.md)                         | [Waveform API](../api/waveform/)         |
+| Projection   | [Detector projection](detector-projection.md)    | [Projection API](../api/projection/)     |
+| Injection    | [Strain injection](strain-injection.md)          | [Injection API](../api/injection/)       |
+| Multichannel | [Multichannel strains](multi-channel-strains.md) | [Multichannel API](../api/multichannel/) |
+
+## Prerequisites
+
+- Install the package (see [Installation](installation.md)).
+- For a minimal environment check, see [Quick Start](quick_start.md).
+
+## See also
+
+- [API overview](../api/index.md) — all reference sections
+- [Documentation home](../index.md)
+- [Contributing](../contributing.md)
+- Maintainer [project tracker](../dev/project-tracker.md) (roadmap and backlog)

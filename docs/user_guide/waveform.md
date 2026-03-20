@@ -1,14 +1,20 @@
 ---
-title: Waveform generation
+title: Waveform examples
 description:
-    Examples for time-domain gravitational-wave polarizations with PyCBC and
-    GWpy.
+    Example workflows for time-domain gravitational-wave polarizations with
+    PyCBC and GWpy.
 ---
 
-## Waveform generation
+# Waveform examples
 
-Generate **time-domain gravitational-wave polarizations** $h_{+}$ and
-$h_{\times}$ for compact-binary and other sources supported by
+## Overview
+
+This page is **examples only**. **`pycbc_waveform_wrapper` and `WaveformFactory`
+signatures, arguments, return types, and exceptions** are documented in the
+**[Waveform API](../api/waveform/)** only.
+
+Generate **time-domain gravitational-wave polarizations** \(h*{+}\) and
+\(h*{\times}\) for compact-binary and other sources supported by
 [PyCBC](https://pycbc.org/) time-domain approximants, and return them as
 [GWpy](https://gwpy.github.io)
 [`TimeSeries`](https://gwpy.github.io/docs/latest/api/gwpy.timeseries.TimeSeries/)
@@ -21,16 +27,16 @@ approximants (plus any models you register yourself).
 
 <!-- markdownlint-disable -->
 
-!!! tip "Full API reference"
+!!! tip "API reference"
 
-    For signatures, arguments, return types, and exceptions, see the
-    **[Waveform API](../api/waveform/)** (generated from docstrings).
+    Use **API → Waveform** for the full contract; the sections below are runnable
+    patterns.
 
 <!-- markdownlint-enable -->
 
-### Examples
+## Examples
 
-#### Example 1 — Direct wrapper call (BBH, IMRPhenomD)
+### Example 1 — Direct wrapper call (BBH, IMRPhenomD)
 
 ```python
 from gwmock_signal.waveform import pycbc_waveform_wrapper
@@ -49,7 +55,7 @@ hp, hx = pol["plus"], pol["cross"]
 print(hp.t0, hp.duration)  # GWpy TimeSeries: start time includes tc shift
 ```
 
-#### Example 2 — Factory with parameter dict (aligned spins)
+### Example 2 — Factory with parameter dict (aligned spins)
 
 ```python
 from gwmock_signal.waveform import WaveformFactory
@@ -70,7 +76,7 @@ pol = factory.generate(
 )
 ```
 
-#### Example 3 — Register your own waveform model (not PyCBC)
+### Example 3 — Register your own waveform model (not PyCBC)
 
 Use this when you already have a waveform generator—e.g. **numerical
 relativity**, a **custom reduced-order model**, or a **research prototype**—and
@@ -128,7 +134,7 @@ out = factory.generate(
 )
 ```
 
-#### Example 4 — List available built-in approximants
+### Example 4 — List available built-in approximants
 
 ```python
 from gwmock_signal.waveform import WaveformFactory
@@ -138,7 +144,7 @@ names = factory.list_models()
 print(len(names), names[:5])
 ```
 
-### Tips and pitfalls
+## Tips and pitfalls
 
 - Unknown model names raise `ValueError`; use `list_models()` to inspect what is
   registered.
@@ -149,14 +155,17 @@ print(len(names), names[:5])
 - **Reuse one `WaveformFactory`** in hot loops: construction walks all PyCBC TD
   approximants once and can be slow on cold import.
 
-### Scientific notes
+## Scientific notes
 
 - Parameter conventions follow PyCBC’s `get_td_waveform`; see the
   [PyCBC waveform documentation](https://pycbc.org/pycbc/latest/html/waveform.html).
 - GWpy `TimeSeries` outputs work with typical **GWpy**, **frame writing**, and
   **Bilby** workflows.
 
-### See also
+## See also
 
-- [Waveform API reference](../api/waveform/) — auto-generated from docstrings
+- [User guide overview](index.md)
+- [Detector projection](detector-projection.md) — next step in a typical
+  pipeline
+- [Waveform API reference](../api/waveform/)
 - [Documentation home](../index.md)
