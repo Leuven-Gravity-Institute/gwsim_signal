@@ -36,9 +36,24 @@ class DetectorStrainStack:
     """
 
     def __init__(self, detector_names: tuple[str, ...], channels: tuple[TimeSeries, ...]) -> None:
-        """Prefer the ``from_mapping`` classmethod for public construction."""
+        """Prefer the ``from_mapping`` classmethod for public construction.
+
+        Args:
+            detector_names: Channel order; row ``i`` of ``data`` corresponds to
+                ``detector_names[i]``.
+            channels: Tuple of GWpy time series objects, one per detector.
+
+        Raises:
+            ValueError: If ``detector_names`` and ``channels`` have different lengths.
+            ValueError: If ``channels`` is empty.
+            TypeError: If a channel is not a GWpy [`TimeSeries`](https://gwpy.github.io/docs/latest/api/gwpy.timeseries.TimeSeries/).
+            ValueError: If the channels are not aligned on the same grid.
+            ValueError: If the channels are not compatible (mismatched unit or sample rate).
+        """
         if len(detector_names) != len(channels):
             raise ValueError("detector_names and channels must have the same length.")
+        if len(channels) == 0:
+            raise ValueError("At least one channel is required.")
         self._names = detector_names
         self._channels = channels
 
