@@ -10,10 +10,10 @@ description:
 After generating **plus** and **cross** polarizations (see
 [Waveforms](waveform.md)), the next step in many pipelines is to compute the
 **strain in each interferometer** using the detector **antenna patterns**
-\(F*{+}\), \(F*{\times}\) and **geometric time delays** relative to the
-geocenter. This is required for **injection into multi-detector data**,
-**end-to-end simulations**, and cross-checks with **matched filtering** that use
-the same sky location and polarization as the search.
+$F_{+}$, $F_{\times}$ and **geometric time delays** relative to the geocenter.
+This is required for **injection into multi-detector data**, **end-to-end
+simulations**, and cross-checks with **matched filtering** that use the same sky
+location and polarization as the search.
 
 This page is **examples only**. **Signatures, parameter semantics, return types,
 and exceptions** for `project_polarizations_to_network` live exclusively in the
