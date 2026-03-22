@@ -25,7 +25,7 @@ flowchart LR
 
 Under **User guide → Examples** in the sidebar:
 
-1. **[Waveforms](waveform.md)** — Produce \(h*{+}\), \(h*{\times}\) with PyCBC;
+1. **[Waveforms](waveform.md)** — Produce $h_{+}$, $h_{\times}$ with PyCBC;
    optional registry for custom models.
 2. **[Detector projection](detector-projection.md)** — Map polarizations to each
    IFO strain using antenna patterns and delays.
