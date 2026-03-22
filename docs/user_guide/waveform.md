@@ -13,8 +13,8 @@ This page is **examples only**. **`pycbc_waveform_wrapper` and `WaveformFactory`
 signatures, arguments, return types, and exceptions** are documented in the
 **[Waveform API](../api/waveform/)** only.
 
-Generate **time-domain gravitational-wave polarizations** \(h*{+}\) and
-\(h*{\times}\) for compact-binary and other sources supported by
+Generate **time-domain gravitational-wave polarizations** $h_{+}$ and
+$h_{\times}$ for compact-binary and other sources supported by
 [PyCBC](https://pycbc.org/) time-domain approximants, and return them as
 [GWpy](https://gwpy.github.io)
 [`TimeSeries`](https://gwpy.github.io/docs/latest/api/gwpy.timeseries.TimeSeries/)
