@@ -15,7 +15,10 @@ def _validate_aligned_channels(channels: Sequence[TimeSeries]) -> None:
     ref = channels[0]
     ref_times = ref.times.value
     for i, s in enumerate(channels[1:], start=1):
-        s.is_compatible(ref)
+        if not s.is_compatible(ref):
+            raise ValueError(
+                f"Channel {i} is not compatible with reference channel 0 (mismatched unit or sample rate)."
+            )
         if len(s) != len(ref):
             raise ValueError(f"Channel {i} length {len(s)} does not match reference length {len(ref)}.")
         if not np.allclose(s.times.value, ref_times):
