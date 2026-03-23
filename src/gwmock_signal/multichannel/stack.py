@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 import numpy as np
+from astropy.units.quantity import Quantity
 from gwpy.timeseries import TimeSeries
 
 
@@ -111,13 +112,21 @@ class DetectorStrainStack:
         return self._channels[0].t0
 
     @property
-    def sample_rate(self):
-        """Sample rate (GWpy quantity), identical for every channel."""
+    def sample_rate(self) -> Quantity:
+        """Sample rate (GWpy quantity), identical for every channel.
+
+        Returns:
+            Sample rate of the first channel.
+        """
         return self._channels[0].sample_rate
 
     @property
     def data(self) -> np.ndarray:
-        """Strain samples shaped ``(n_detectors, n_samples)`` (C-contiguous copy)."""
+        """Strain samples shaped ``(n_detectors, n_samples)`` (C-contiguous copy).
+
+        Returns:
+            Strain samples shaped ``(n_detectors, n_samples)`` (C-contiguous copy).
+        """
         rows = [np.asarray(s.value, dtype=float) for s in self._channels]
         return np.stack(rows, axis=0).copy()
 
@@ -148,9 +157,17 @@ class DetectorStrainStack:
         raise TypeError(f"index must be int or str, got {type(key)}")
 
     def __len__(self) -> int:
-        """Number of detectors (channels)."""
+        """Number of detectors (channels).
+
+        Returns:
+            Number of detectors (channels).
+        """
         return len(self._channels)
 
     def to_dict(self) -> dict[str, TimeSeries]:
-        """Map detector name to GWpy series (same objects as ``__getitem__``)."""
+        """Map detector name to GWpy series (same objects as ``__getitem__``).
+
+        Returns:
+            Mapping of detector name to GWpy series.
+        """
         return dict(zip(self._names, self._channels, strict=True))
