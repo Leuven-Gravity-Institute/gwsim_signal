@@ -122,13 +122,27 @@ class DetectorStrainStack:
         return np.stack(rows, axis=0).copy()
 
     def __getitem__(self, key: int | str) -> TimeSeries:
-        """Return one channel by index or detector name (same object as stored)."""
+        """Return one channel by index or detector name (same object as stored).
+
+        Args:
+            key: Index or detector name.
+
+        Returns:
+            GWpy TimeSeries object for the specified channel.
+
+        Raises:
+            KeyError: If the key is not found.
+            TypeError: If the key is not an integer or string.
+            TypeError: If the key is a boolean.
+        """
         if isinstance(key, str):
             try:
                 idx = self._names.index(key)
             except ValueError as exc:
                 raise KeyError(key) from exc
             return self._channels[idx]
+        if isinstance(key, bool):
+            raise TypeError("index must be int or str, got bool")
         if isinstance(key, int):
             return self._channels[key]
         raise TypeError(f"index must be int or str, got {type(key)}")
