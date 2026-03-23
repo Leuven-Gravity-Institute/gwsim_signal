@@ -21,7 +21,7 @@ def _validate_aligned_channels(channels: Sequence[TimeSeries]) -> None:
             )
         if len(s) != len(ref):
             raise ValueError(f"Channel {i} length {len(s)} does not match reference length {len(ref)}.")
-        if not np.allclose(s.times.value, ref_times):
+        if not np.array_equal(s.times.value, ref_times):
             raise ValueError(
                 f"Channel {i} time grid does not match reference (channel 0); "
                 "all detectors must share identical sample times."
