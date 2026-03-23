@@ -1,65 +1,31 @@
 ---
-title: Strain injection
+title: Strain injection examples
 description:
-    Examples for adding simulated strain into a target GWpy time series segment.
+    Example workflows for adding simulated strain into a target GWpy time
+    series.
 ---
 
-After producing detector strain (e.g. with [Waveform generation](waveform.md)
-and [Detector strain projection](detector-projection.md)), you often need to
-**embed that strain into a longer segment** aligned to a science run—typically
-starting from **zeros** or from a **noise** realization (noise generation can
-live in a separate package). This step is central to **software injections**,
-**end-to-end mock challenges**, and **pipeline validation**.
+# Strain injection examples
 
-This guide describes typical usage. **Full signatures and exceptions** are in
-**[API → Injection](../api/injection/)** (generated from docstrings).
+After producing detector strain (e.g. with [Waveforms](waveform.md) and
+[Detector projection](detector-projection.md)), you often need to **embed that
+strain into a longer segment** aligned to a science run—typically starting from
+**zeros** or from a **noise** realization (noise generation can live in a
+separate package). This step is central to **software injections**, **end-to-end
+mock challenges**, and **pipeline validation**.
+
+This page is **examples only**. **Signatures, defaults, and raised exceptions**
+for `inject_strain` / `inject_strains_sequential` are documented only under
+**[API → Injection](../api/injection/)**.
 
 <!-- markdownlint-disable -->
 
 !!! tip "API reference"
 
-    See **API → Injection** for `inject_strain` and `inject_strains_sequential`.
+    Use **API → Injection** for the authoritative behavior description; examples
+    below illustrate common patterns.
 
 <!-- markdownlint-enable -->
-
-## Public API
-
-The package provides:
-
-```python
-from gwpy.timeseries import TimeSeries
-
-
-def inject_strain(
-    target: TimeSeries,
-    injection: TimeSeries,
-    *,
-    interpolate_if_offset: bool = True,
-) -> TimeSeries:
-    """Add ``injection`` into ``target`` on the time grid (returns a new series).
-
-    Both arguments must be compatible GWpy time series (same sample spacing and
-    compatible epochs). The injection is **added** to the target samples where
-    times overlap; out-of-range parts of the injection may be cropped. If the
-    injection start time does not fall on an exact sample boundary of the
-    target, optional cubic interpolation can align it (see pitfalls).
-    """
-```
-
-Optional helper (same module) for clarity:
-
-```python
-def inject_strains_sequential(
-    target: TimeSeries,
-    injections: list[TimeSeries],
-    *,
-    interpolate_if_offset: bool = True,
-) -> TimeSeries:
-    """Apply ``inject_strain`` in order, returning the final series."""
-```
-
-Behavior matches the usual GW analysis expectation: **h_total = h_target +
-h_inj** on overlapping samples.
 
 ## Example 1 — Inject one CBC into a zero-filled segment
 
@@ -125,8 +91,7 @@ out = inject_strain(target, h1, interpolate_if_offset=False)
 - **Units:** Target and injection should use compatible strain units (typically
   dimensionless); mixed units should raise a clear error.
 - **No overlap:** If the injection lies entirely outside the target span, the
-  implementation should return the target unchanged (or document copy
-  semantics).
+  API returns a **copy** of the target (same samples, new object).
 - **Interpolation:** Cubic interpolation can ring at edges; prefer aligned
   waveforms from the same `sampling_frequency` and GPS grid when possible.
 - **Performance:** Large segments are memory-bound; avoid unnecessary copies if
@@ -142,8 +107,10 @@ out = inject_strain(target, h1, interpolate_if_offset=False)
 
 ## See also
 
-- [Waveform generation](waveform.md)
-- [Detector strain projection](detector-projection.md)
+- [User guide overview](index.md)
+- [Waveforms](waveform.md)
+- [Detector projection](detector-projection.md)
+- [Multichannel strains](multi-channel-strains.md)
 - [Injection API](../api/injection/)
 - [API overview](../api/index.md)
 - [Documentation home](../index.md)

@@ -110,8 +110,14 @@ python -c "import gwmock_signal; print(gwmock_signal.__version__)"
 
 ## Documentation
 
-Full documentation to be available at
-[https://leuven-gravity-institute.github.io/gwmock-signal](https://leuven-gravity-institute.github.io/gwmock-signal).
+- **Site:**
+  [gwmock-signal documentation](https://leuven-gravity-institute.github.io/gwmock-signal/)
+- **User guide:** overview and **Examples** (use-case walkthroughs); API details
+  stay in **API**
+- **API reference:** signatures, types, and exceptions (mkdocstrings)
+
+Build locally: `uv sync --extra docs && uv run zensical serve` (or
+`zensical build` for static output in `site/`).
 
 ## Contributing
 

@@ -18,4 +18,4 @@ icon: material/sitemap
 <!-- prettier-ignore-end -->
 
 For **usage examples**, see the
-[User Guide — Detector strain projection](../../user_guide/detector-projection.md).
+[User guide — Detector projection examples](../../user_guide/detector-projection.md).

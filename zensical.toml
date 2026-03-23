@@ -27,7 +27,7 @@ site_author = "Isaac C. F. Wong"
 # The site_url is the canonical URL for your site. When building online
 # documentation you should set this.
 # Read more: https://zensical.org/docs/setup/basics/#site_url
-#site_url = "https://www.example.com/"
+site_url = "https://leuven-gravity-institute.github.io/gwmock-signal/"
 
 # The copyright notice appears in the page footer and can contain an HTML
 # fragment.
@@ -48,17 +48,25 @@ nav = [
   { "Get Started" = "index.md" },
   { "Installation" = "user_guide/installation.md" },
   { "User Guide" = [
+    { "Overview" = "user_guide/index.md" },
     { "Quick Start" = "user_guide/quick_start.md" },
-    { "Waveform generation" = "user_guide/waveform.md" },
-    { "Detector strain projection" = "user_guide/detector-projection.md" },
+    { "Examples" = [
+      { "Waveforms" = "user_guide/waveform.md" },
+      { "Detector projection" = "user_guide/detector-projection.md" },
+      { "Strain injection" = "user_guide/strain-injection.md" },
+      { "Multichannel strains" = "user_guide/multi-channel-strains.md" },
+    ] },
   ] },
   { "Security" = "security.md" },
   { "Contributing" = "contributing.md" },
+  { "Project tracker" = "dev/project-tracker.md" },
   { "Troubleshooting" = "dev/troubleshooting.md" },
   { "API" = [
     { "Overview" = "api/index.md" },
     { "Waveform" = "api/waveform/index.md" },
     { "Projection" = "api/projection/index.md" },
+    { "Injection" = "api/injection/index.md" },
+    { "Multichannel" = "api/multichannel/index.md" },
     { "Utility" = [
       { "Overview" = "api/utils/index.md" },
       { "Logging" = "api/utils/log.md" },

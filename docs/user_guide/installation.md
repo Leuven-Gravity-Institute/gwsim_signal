@@ -1,7 +1,15 @@
+---
+title: Installation
+description: Install gwmock-signal with uv, optional extras, and verify the CLI.
+---
+
 # Installation
 
 We recommend using `uv` to manage virtual environments for installing
-`gwmock_signal`.
+`gwmock-signal` (import name `gwmock_signal`).
+
+After install, continue with the [user guide overview](index.md) or
+[Quick Start](quick_start.md).
 
 If you don't have `uv` installed, you can install it with pip. See the project
 pages for more details:
@@ -87,10 +95,10 @@ uv run pre-commit install --hook-type commit-msg
 
 ## Verify Installation
 
-Check that `gwmock_signal` is installed correctly:
+Check that the package and CLI are available:
 
 ```bash
-gwmock_signal --help
+gwmock-signal --help
 ```
 
 ```bash
@@ -99,9 +107,12 @@ python -c "import gwmock_signal; print(gwmock_signal.__version__)"
 
 ## Dependencies
 
-### Core Dependencies
+### Core dependencies
 
-- **typer**: CLI framework
+- **numpy**: Numerical arrays
+- **gwpy**: `TimeSeries` and GW I/O conventions
+- **pycbc**: Waveforms, detector geometry, and related utilities
+- **typer**: CLI (`gwmock-signal` entry point)
 
 ## Getting Help
 

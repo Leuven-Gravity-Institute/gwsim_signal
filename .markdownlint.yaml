@@ -42,3 +42,6 @@ MD032: true
 
 MD046:
     style: fenced
+
+# Disable only one top-level heading
+MD025: false
