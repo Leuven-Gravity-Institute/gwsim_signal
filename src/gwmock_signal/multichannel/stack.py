@@ -45,6 +45,7 @@ class DetectorStrainStack:
 
         Raises:
             ValueError: If ``detector_names`` and ``channels`` have different lengths.
+            ValueError: If ``detector_names`` is not unique.
             ValueError: If ``channels`` is empty.
             TypeError: If a channel is not a GWpy [`TimeSeries`](https://gwpy.github.io/docs/latest/api/gwpy.timeseries.TimeSeries/).
             ValueError: If the channels are not aligned on the same grid.
@@ -53,6 +54,8 @@ class DetectorStrainStack:
         """
         if len(detector_names) != len(channels):
             raise ValueError("detector_names and channels must have the same length.")
+        if len(set(detector_names)) != len(detector_names):
+            raise ValueError("detector_names must be unique.")
         for i, s in enumerate(channels):
             if not isinstance(s, TimeSeries):
                 raise TypeError(f"channels[{i}] must be gwpy.timeseries.TimeSeries, got {type(s)}")
