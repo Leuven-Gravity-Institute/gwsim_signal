@@ -49,11 +49,14 @@ class DetectorStrainStack:
             TypeError: If a channel is not a GWpy [`TimeSeries`](https://gwpy.github.io/docs/latest/api/gwpy.timeseries.TimeSeries/).
             ValueError: If the channels are not aligned on the same grid.
             ValueError: If the channels are not compatible (mismatched unit or sample rate).
+
         """
         if len(detector_names) != len(channels):
             raise ValueError("detector_names and channels must have the same length.")
-        if len(channels) == 0:
-            raise ValueError("At least one channel is required.")
+        for i, s in enumerate(channels):
+            if not isinstance(s, TimeSeries):
+                raise TypeError(f"channels[{i}] must be gwpy.timeseries.TimeSeries, got {type(s)}")
+        _validate_aligned_channels(channels)
         self._names = detector_names
         self._channels = channels
 
