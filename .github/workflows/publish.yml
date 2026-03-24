@@ -62,9 +62,5 @@ jobs:
 
             - name: Publish to PyPI
               uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-              # Remove this line if you want the workflow to fail on publish errors
-              # This is added for this template only since the environment 'pypi' is
-              # not created to avoid publishing
-              continue-on-error: true
               with:
                   packages-dir: dist/
