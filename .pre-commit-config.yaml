@@ -1,7 +1,8 @@
 ci:
-    autoupdate_schedule: manual
+    autoupdate_schedule: quarterly
     autofix_prs: true
-    autoupdate_commit_msg: 'chore(deps): pre-commit autoupdate'
+    autoupdate_commit_msg: 'chore(deps): [pre-commit.ci] autoupdate'
+    autofix_commit_msg: 'chore: [pre-commit.ci] autofix'
 
 repos:
     - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
