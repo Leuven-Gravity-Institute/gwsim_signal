@@ -59,7 +59,7 @@ jobs:
         with:
             tag_name: ${{ needs.create_tag.outputs.new_tag }}
 
-    build:
+    publish:
         needs: release
         runs-on: ubuntu-latest
         steps:
