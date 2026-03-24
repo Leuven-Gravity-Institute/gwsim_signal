@@ -8,7 +8,7 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/gwmock-signal)](https://pypi.org/project/gwmock-signal/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
-[![DOI](https://zenodo.org/badge/924023559.svg)](https://doi.org/10.5281/zenodo.18017404)
+[![DOI](https://zenodo.org/badge/1180014442.svg)](https://doi.org/10.5281/zenodo.19202406)
 [![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
 
 A Python package for simulating gravitational wave signals.
