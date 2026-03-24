@@ -1,4 +1,4 @@
-name: Create Tag
+name: Scheduled Release
 
 on:
     schedule:
