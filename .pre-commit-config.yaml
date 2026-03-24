@@ -1,3 +1,8 @@
+ci:
+    autoupdate_schedule: manual
+    autofix_prs: true
+    autoupdate_commit_msg: 'chore(deps): pre-commit autoupdate'
+
 repos:
     - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
       rev: v9.24.0
