@@ -30,7 +30,7 @@ jobs:
               uses: isaac-cf-wong/detect-git-changes-action@733e1f86fd2c452f69af180080c7ba2d7df9da1f # v0.0.3
 
             - name: Bump version and push tag
-              if: steps.check_commits.outputs.has-changes == 'true'
+              if: ${{ steps.check_commits.outputs.has-changes == 'true' }}
               id: tag_version
               uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
               with:
@@ -40,7 +40,7 @@ jobs:
                   tag_prefix: v
 
             - name: Output tag information
-              if: steps.check_commits.outputs.has-changes == 'true'
+              if: ${{ steps.check_commits.outputs.has-changes == 'true' }}
               run: |
                   echo "### Tag Created :rocket:" >> $GITHUB_STEP_SUMMARY
                   echo "- **New tag**: ${{ steps.tag_version.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
@@ -49,7 +49,7 @@ jobs:
 
     release:
         needs: create_tag
-        if: needs.create_tag.outputs.has-changes == 'true'
+        if: ${{ needs.create_tag.outputs.has-changes == 'true' }}
         uses: ./.github/workflows/release.yml
         permissions:
             contents: write
@@ -58,10 +58,7 @@ jobs:
             tag_name: ${{ needs.create_tag.outputs.new_tag }}
 
     build:
-        needs:
-            - create_tag
-            - release
-        if: needs.create_tag.outputs.has-changes == 'true'
+        needs: release
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -117,6 +114,5 @@ jobs:
               # Remove this line if you want the workflow to fail on publish errors
               # This is added for this template only since the environment 'pypi' is
               # not created to avoid publishing
-              continue-on-error: true
               with:
                   packages-dir: dist/
