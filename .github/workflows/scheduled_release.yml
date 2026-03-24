@@ -74,47 +74,22 @@ jobs:
                   echo "- **Version tag**: ${{ needs.create_tag.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
 
             - name: Install uv
-              uses: astral-sh/setup-uv@7
+              uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
               with:
                   python-version: '3.13'
-                  enable-cache: 'true'
-
-            - name: Install dependencies
-              run: uv sync --frozen
 
             - name: Build distribution
               run: uv build
 
-            - name: Upload build artifacts
-              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-              with:
-                  name: python-package-distributions
-                  path: dist/
+            - name: Smoke test (wheel)
+              run:
+                  uv run --isolated --no-project --with dist/*.whl
+                  tests/smoke_test.py
 
-    publish-to-pypi:
-        needs: build
-        runs-on: ubuntu-latest
-        environment: pypi
-        permissions:
-            id-token: write
-            attestations: write
+            - name: Smoke test (source distribution)
+              run:
+                  uv run --isolated --no-project --with dist/*.tar.gz
+                  tests/smoke_test.py
 
-        steps:
-            - name: Download build artifacts
-              uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
-              with:
-                  name: python-package-distributions
-                  path: dist/
-
-            - name: Generate attestation
-              uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
-              with:
-                  subject-path: dist/*
-
-            - name: Publish to PyPI
-              uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-              # Remove this line if you want the workflow to fail on publish errors
-              # This is added for this template only since the environment 'pypi' is
-              # not created to avoid publishing
-              with:
-                  packages-dir: dist/
+            - name: Publish
+              run: uv publish
