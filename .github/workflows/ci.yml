@@ -34,26 +34,3 @@ jobs:
               uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
-
-    codeql:
-        if:
-            ${{ github.event_name == 'push' || github.event_name ==
-            'pull_request' || github.event_name == 'workflow_dispatch' ||
-            (github.event_name == 'workflow_call') }}
-        name: codeql
-        runs-on: ubuntu-latest
-        permissions:
-            security-events: write
-        steps:
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-            - name: Initialize CodeQL
-              uses: github/codeql-action/init@38697555549f1db7851b81482ff19f1fa5c4fedc # v4
-              with:
-                  languages: python
-
-            - name: Autobuild
-              uses: github/codeql-action/autobuild@38697555549f1db7851b81482ff19f1fa5c4fedc # v4
-
-            - name: Perform CodeQL Analysis
-              uses: github/codeql-action/analyze@38697555549f1db7851b81482ff19f1fa5c4fedc # v4

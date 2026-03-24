@@ -9,16 +9,9 @@ permissions:
     contents: write
 
 jobs:
-    ci:
-        uses: ./.github/workflows/ci.yml
-        permissions:
-            security-events: write
-
-    create_tag:
-        needs: ci
+    check_new_commits:
         runs-on: ubuntu-latest
         outputs:
-            new_tag: ${{ steps.tag_version.outputs.new_tag }}
             has-changes: ${{ steps.check_commits.outputs.has-changes }}
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -31,15 +24,60 @@ jobs:
               with:
                   use-latest-tag: true
 
-            - name: Bump version and push tag
-              if: ${{ steps.check_commits.outputs.has-changes == 'true' }}
-              id: tag_version
-              uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
+    ci:
+        needs: check_new_commits
+        if: ${{ needs.check_new_commits.outputs.has-changes }}
+        uses: ./.github/workflows/ci.yml
+
+    codeql:
+        needs: check_new_commits
+        if: ${{ needs.check_new_commits.outputs.has-changes }}
+        uses: ./.github/workflows/codeql.yml
+        permissions:
+            security-events: write
+
+    create_tag:
+        needs: [ci, codeql]
+        runs-on: ubuntu-latest
+        outputs:
+            new_tag: ${{ steps.tag_version.outputs.new_tag }}
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
               with:
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-                  release_branches: main
-                  default_bump: patch
-                  tag_prefix: v
+                  fetch-depth: 0
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7
+              with:
+                  python-version: '3.13'
+                  enable-cache: 'true'
+
+            - name: Install dependencies
+              run: uv sync --extra release --frozen
+
+            - name: Bump version and push tag
+              id: tag_version
+              run: |
+                  PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+                  if [ "$PREVIOUS_TAG" = "none" ]; then
+                    NEW_TAG="v0.1.0"
+                  else
+                    NEW_TAG=$(uv run --frozen git-cliff --bumped-version --config cliff.toml 2>/dev/null)
+                  fi
+                  if ! git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+                    echo "Creating annotated tag $NEW_TAG"
+
+                    git config user.name "github-actions[bot]"
+                    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+                    git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
+                    git push origin "$NEW_TAG"
+                  else
+                    echo "Tag $NEW_TAG already exists, skipping."
+                    exit 1
+                  fi
+                  echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+                  echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
 
             - name: Output tag information
               if: ${{ steps.check_commits.outputs.has-changes == 'true' }}
@@ -51,7 +89,6 @@ jobs:
 
     release:
         needs: create_tag
-        if: ${{ needs.create_tag.outputs.has-changes == 'true' }}
         uses: ./.github/workflows/release.yml
         permissions:
             contents: write
