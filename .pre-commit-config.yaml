@@ -49,6 +49,7 @@ repos:
       rev: v3.8.1
       hooks:
           - id: prettier
+            stages: [pre-commit]
 
     - repo: https://github.com/DavidAnson/markdownlint-cli2
       rev: v0.22.0

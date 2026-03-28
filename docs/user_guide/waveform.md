@@ -113,7 +113,7 @@ def toy_gaussian_sine_burst(
     f_hz = float(kwargs.get("f0", 150.0))  # carrier frequency [Hz]
     dt = 1.0 / sampling_frequency
     n_half = max(8, int(width_s * sampling_frequency))
-    t = (np.arange(-n_half, n_half + 1) * dt) + tc
+    t = (np.arrange(-n_half, n_half + 1) * dt) + tc
     env = np.exp(-0.5 * ((t - tc) / (width_s / 3)) ** 2)
     phase = 2 * np.pi * f_hz * (t - tc)
     hp = env * np.cos(phase)
