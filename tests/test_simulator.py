@@ -66,7 +66,7 @@ class TestGWSimulatorAbstract:
             def required_params(self):
                 return frozenset()
 
-            def simulate(self, params) -> DetectorStrainStack:
+            def simulate(self, params) -> DetectorStrainStack:  # type: ignore[override]
                 raise NotImplementedError
 
         stub = _StochasticStub()
@@ -89,7 +89,7 @@ class TestValidateParams:
             def required_params(self) -> frozenset[str]:
                 return required
 
-            def simulate(self, params) -> DetectorStrainStack:
+            def simulate(self, params) -> DetectorStrainStack:  # type: ignore[override]
                 raise NotImplementedError
 
         return Concrete()
@@ -211,9 +211,23 @@ class TestCBCSimulatorSimulate:
         hc = TimeSeries(np.zeros(n), t0=t0, sample_rate=fs)
         projected_strain = _zeros(n, fs, t0)
 
-        mock_factory_cls.return_value.generate.return_value = {"plus": hp, "cross": hc}
-        mock_project.return_value = {"H1": projected_strain}
-        mock_inject.return_value = _zeros(n, fs, t0)
+        call_order: list[str] = []
+
+        def _gen(*args, **kwargs):
+            call_order.append("generate")
+            return {"plus": hp, "cross": hc}
+
+        def _project(*args, **kwargs):
+            call_order.append("project")
+            return {"H1": projected_strain}
+
+        def _inject(*args, **kwargs):
+            call_order.append("inject")
+            return _zeros(n, fs, t0)
+
+        mock_factory_cls.return_value.generate.side_effect = _gen
+        mock_project.side_effect = _project
+        mock_inject.side_effect = _inject
 
         background = {"H1": _zeros(n, fs, t0)}
         CBCSimulator(waveform_model="IMRPhenomD").simulate(
@@ -227,6 +241,7 @@ class TestCBCSimulatorSimulate:
         mock_factory_cls.return_value.generate.assert_called_once()
         mock_project.assert_called_once()
         mock_inject.assert_called_once()
+        assert call_order == ["generate", "project", "inject"]
 
     @patch("gwmock_signal.simulator.WaveformFactory")
     def test_simulate_missing_param_raises_before_waveform(self, mock_factory_cls):

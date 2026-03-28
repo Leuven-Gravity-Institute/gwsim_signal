@@ -46,11 +46,23 @@ class GWSimulator(ABC):
             raise ValueError(f"Missing required parameters: {sorted(missing)}")
 
     @abstractmethod
-    def simulate(self, params: dict[str, Any]) -> DetectorStrainStack:
+    def simulate(
+        self,
+        params: dict[str, Any],
+        detector_names: Sequence[str],
+        background: Mapping[str, TimeSeries],
+        *,
+        sampling_frequency: float,
+        minimum_frequency: float,
+    ) -> DetectorStrainStack:
         """Simulate a gravitational-wave signal and return a ``DetectorStrainStack``.
 
         Args:
             params: Source parameters.
+            detector_names: IFO codes (e.g. ``'H1'``, ``'L1'``, ``'V1'``).
+            background: Mapping of detector name to background ``TimeSeries``.
+            sampling_frequency: Sample rate in Hz.
+            minimum_frequency: Low-frequency cutoff in Hz.
 
         Returns:
             ``DetectorStrainStack`` containing the simulated strain per detector.
@@ -121,6 +133,14 @@ class TransientSimulator(GWSimulator):
             each detector in ``detector_names`` order.
         """
         self._validate_params(params)
+
+        # Validate projection keys before direct params[...] access.
+        # _validate_params only checks subclass-defined required_params. Non-CBC subclasses can pass validation and then fail mid-pipeline with KeyError.
+        projection_keys = {"right_ascension", "declination", "polarization"}
+        missing_projection = projection_keys - set(params)
+        if missing_projection:
+            raise ValueError(f"Missing required parameters: {sorted(missing_projection)}")
+
         hp, hc = self.generate_polarizations(params, sampling_frequency, minimum_frequency)
         projected = project_polarizations_to_network(
             {"plus": hp, "cross": hc},
