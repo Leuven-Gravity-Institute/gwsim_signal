@@ -47,8 +47,8 @@ class TestGWSimulatorAbstract:
         with pytest.raises(TypeError):
             GWSimulator()  # type: ignore[abstract]
 
-    def test_concrete_subclass_without_required_methods_raises(self):
-        """Subclass missing required_params or generate_polarizations raises TypeError."""
+    def test_concrete_subclass_without_simulate_raises(self):
+        """Subclass missing simulate raises TypeError."""
 
         class Incomplete(GWSimulator):
             @property
@@ -57,6 +57,20 @@ class TestGWSimulatorAbstract:
 
         with pytest.raises(TypeError):
             Incomplete()  # type: ignore[abstract]
+
+    def test_stochastic_simulator_stub_no_transient_required(self):
+        """A GWSimulator subclass implementing only simulate and required_params is valid."""
+
+        class _StochasticStub(GWSimulator):
+            @property
+            def required_params(self):
+                return frozenset()
+
+            def simulate(self, params) -> DetectorStrainStack:
+                raise NotImplementedError
+
+        stub = _StochasticStub()
+        assert isinstance(stub, GWSimulator)
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +89,7 @@ class TestValidateParams:
             def required_params(self) -> frozenset[str]:
                 return required
 
-            def generate_polarizations(self, params, sampling_frequency, minimum_frequency):
+            def simulate(self, params) -> DetectorStrainStack:
                 raise NotImplementedError
 
         return Concrete()
@@ -286,6 +300,10 @@ class TestPublicImport:
     def test_gw_simulator_importable_from_top_level(self):
         """GWSimulator is reachable via gwmock_signal.GWSimulator."""
         assert hasattr(gwmock_signal, "GWSimulator")
+
+    def test_transient_simulator_importable_from_top_level(self):
+        """TransientSimulator is reachable via gwmock_signal.TransientSimulator."""
+        assert hasattr(gwmock_signal, "TransientSimulator")
 
     def test_cbc_simulator_importable_from_top_level(self):
         """CBCSimulator is reachable via gwmock_signal.CBCSimulator."""

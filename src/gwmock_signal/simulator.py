@@ -20,9 +20,9 @@ logger = logging.getLogger("gwmock_signal.simulator")
 class GWSimulator(ABC):
     """Abstract base class for gravitational-wave signal simulators.
 
-    Subclasses must implement ``generate_polarizations`` and ``required_params``.
-    The ``simulate`` method composes the full pipeline: validation → polarizations
-    → detector projection → strain injection → stacking.
+    Defines the minimal source-agnostic contract: subclasses must implement
+    ``required_params`` and ``simulate``. ``_validate_params`` is provided as a
+    concrete helper.
 
     See ``docs/api/simulator/index.md`` for the API reference.
     """
@@ -31,6 +31,40 @@ class GWSimulator(ABC):
     @abstractmethod
     def required_params(self) -> frozenset[str]:
         """Parameter keys that must be present in the params dict passed to ``simulate``."""
+
+    def _validate_params(self, params: dict[str, Any]) -> None:
+        """Raise ``ValueError`` naming any key in ``required_params`` missing from ``params``.
+
+        Args:
+            params: Source parameters to validate.
+
+        Raises:
+            ValueError: If any required key is absent, naming each missing key.
+        """
+        missing = self.required_params - set(params)
+        if missing:
+            raise ValueError(f"Missing required parameters: {sorted(missing)}")
+
+    @abstractmethod
+    def simulate(self, params: dict[str, Any]) -> DetectorStrainStack:
+        """Simulate a gravitational-wave signal and return a ``DetectorStrainStack``.
+
+        Args:
+            params: Source parameters.
+
+        Returns:
+            ``DetectorStrainStack`` containing the simulated strain per detector.
+        """
+
+
+class TransientSimulator(GWSimulator):
+    """Intermediate base class for transient GW source simulators.
+
+    Provides the concrete ``simulate`` method that orchestrates the full
+    transient injection pipeline: validation → polarizations → detector
+    projection → strain injection → stacking.  Subclasses must implement
+    ``generate_polarizations`` and ``required_params``.
+    """
 
     @abstractmethod
     def generate_polarizations(
@@ -49,19 +83,6 @@ class GWSimulator(ABC):
         Returns:
             Tuple of ``(hp, hc)`` GWpy ``TimeSeries`` objects.
         """
-
-    def _validate_params(self, params: dict[str, Any]) -> None:
-        """Raise ``ValueError`` naming any key in ``required_params`` missing from ``params``.
-
-        Args:
-            params: Source parameters to validate.
-
-        Raises:
-            ValueError: If any required key is absent, naming each missing key.
-        """
-        missing = self.required_params - set(params)
-        if missing:
-            raise ValueError(f"Missing required parameters: {sorted(missing)}")
 
     def simulate(  # noqa: PLR0913
         self,
@@ -120,7 +141,7 @@ class GWSimulator(ABC):
         return DetectorStrainStack.from_mapping(detector_names, injected)
 
 
-class CBCSimulator(GWSimulator):
+class CBCSimulator(TransientSimulator):
     """Compact binary coalescence simulator backed by ``WaveformFactory``.
 
     Generates time-domain polarizations via PyCBC (or any registered model),
