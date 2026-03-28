@@ -274,17 +274,21 @@ class TestCBCSimulatorEndToEnd:
         WaveformFactory/PyCBC waveform generation is mocked at the get_td_waveform
         boundary; project_polarizations_to_network and inject_strain run unpatched,
         exercising the full assembled pipeline with real geometry and injection logic.
+        The plus polarization is set to a unit-amplitude signal so that the antenna
+        response at the GW150914 sky position produces a non-zero projected strain,
+        confirming that the projection/injection path actually modifies the data.
         """
         tc = _MINIMAL_PARAMS["tc"]
         fs = 4096.0
         n = 256
 
-        # Synthetic waveform at epoch=0; pycbc_waveform_wrapper adds tc to start_time
-        pycbc_hp = PyCBCTimeSeries(np.zeros(n, dtype=float), delta_t=1.0 / fs, epoch=0.0)
+        # Non-zero plus polarization; pycbc_waveform_wrapper adds tc to start_time
+        # so the resulting GWpy series starts at tc and overlaps the background fully.
+        pycbc_hp = PyCBCTimeSeries(np.ones(n, dtype=float), delta_t=1.0 / fs, epoch=0.0)
         pycbc_hc = PyCBCTimeSeries(np.zeros(n, dtype=float), delta_t=1.0 / fs, epoch=0.0)
         mock_get_td.return_value = (pycbc_hp, pycbc_hc)
 
-        # Background covers the post-injection epoch [tc, tc + n/fs)
+        # Zero-noise background covers the post-injection epoch [tc, tc + n/fs)
         detector_names = ["H1", "L1"]
         background = {name: TimeSeries(np.zeros(n), t0=tc, sample_rate=fs) for name in detector_names}
 
@@ -299,9 +303,14 @@ class TestCBCSimulatorEndToEnd:
         assert isinstance(result, DetectorStrainStack)
         assert result.detector_names == tuple(detector_names)
         assert len(result) == len(detector_names)
-        # Each channel should be a TimeSeries with the same length as the background
+        # Each channel should be a TimeSeries with the same length as the background.
         for name in detector_names:
             assert len(result[name]) == n
+        # The projected plus polarization at the GW150914 sky position is non-zero for
+        # at least one detector; verify the injection path modified the background.
+        assert any(np.any(result[name].value != 0.0) for name in detector_names), (
+            "Expected non-zero strain in at least one detector after injection"
+        )
 
 
 # ---------------------------------------------------------------------------
