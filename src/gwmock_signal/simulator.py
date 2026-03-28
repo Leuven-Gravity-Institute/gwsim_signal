@@ -223,9 +223,13 @@ class CBCSimulator(TransientSimulator):
         Returns:
             Tuple of ``(hp, hc)`` GWpy ``TimeSeries`` objects.
         """
+        waveform_params = {
+            k: v for k, v in params.items() if k not in {"right_ascension", "declination", "polarization"}
+        }
+
         result = WaveformFactory().generate(
             self._waveform_model,
-            params,
+            waveform_params,
             sampling_frequency=sampling_frequency,
             minimum_frequency=minimum_frequency,
         )
