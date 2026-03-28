@@ -93,6 +93,8 @@ Below is a **toy Gaussian-windowed sinusoid**—illustrative only, not a physica
 CBC waveform—so the example stays short and shows clearly that **you own the
 numerics**:
 
+<!-- spellchecker:off -->
+
 ```python
 import numpy as np
 from astropy import units as u
@@ -133,6 +135,8 @@ out = factory.generate(
     minimum_frequency=20.0,
 )
 ```
+
+<!-- spellchecker:on -->
 
 ### Example 4 — List available built-in approximants
 
