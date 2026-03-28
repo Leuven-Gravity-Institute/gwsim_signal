@@ -93,6 +93,8 @@ Below is a **toy Gaussian-windowed sinusoid**—illustrative only, not a physica
 CBC waveform—so the example stays short and shows clearly that **you own the
 numerics**:
 
+<!-- spellchecker:off -->
+
 ```python
 import numpy as np
 from astropy import units as u
@@ -113,7 +115,7 @@ def toy_gaussian_sine_burst(
     f_hz = float(kwargs.get("f0", 150.0))  # carrier frequency [Hz]
     dt = 1.0 / sampling_frequency
     n_half = max(8, int(width_s * sampling_frequency))
-    t = (np.arrange(-n_half, n_half + 1) * dt) + tc
+    t = (np.arange(-n_half, n_half + 1) * dt) + tc
     env = np.exp(-0.5 * ((t - tc) / (width_s / 3)) ** 2)
     phase = 2 * np.pi * f_hz * (t - tc)
     hp = env * np.cos(phase)
@@ -133,6 +135,8 @@ out = factory.generate(
     minimum_frequency=20.0,
 )
 ```
+
+<!-- spellchecker:on -->
 
 ### Example 4 — List available built-in approximants
 
