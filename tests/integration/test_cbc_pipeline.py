@@ -10,6 +10,7 @@ pycbc = pytest.importorskip("pycbc")
 
 from pycbc.detector import Detector  # noqa: E402
 from pycbc.filter import sigma as pycbc_sigma  # noqa: E402
+from pycbc.psd import from_string as psd_from_string  # noqa: E402
 from pycbc.types import TimeSeries as PyCBCTimeSeries  # noqa: E402
 from scipy.signal import correlate  # noqa: E402
 
@@ -43,8 +44,9 @@ RA = PARAMS["right_ascension"]
 DEC = PARAMS["declination"]
 TC = PARAMS["tc"]
 
-# Reference matched-filter SNR for the H1 channel (computed on first run).
-_REFERENCE_SNR = 3.167686e-22
+# Reference matched-filter SNR for the H1 channel against the aLIGO design
+# sensitivity PSD (aLIGODesignSensitivityP1200087).
+_REFERENCE_SNR = 4.884168e01
 
 
 # ---------------------------------------------------------------------------
@@ -148,7 +150,9 @@ def test_snr_regression():
         delta_t=1.0 / FS,
         epoch=float(h1_ts.t0.value),
     )
-    snr_computed = float(pycbc_sigma(h1_pycbc.to_frequencyseries(), low_frequency_cutoff=FMIN))
+    h1_fs = h1_pycbc.to_frequencyseries()
+    psd = psd_from_string("aLIGODesignSensitivityP1200087", len(h1_fs), h1_fs.delta_f, FMIN)
+    snr_computed = float(pycbc_sigma(h1_fs, psd=psd, low_frequency_cutoff=FMIN))
 
     assert _REFERENCE_SNR > 0.0, f"_REFERENCE_SNR is not set. Update it to {snr_computed:.6e} in this file."
     assert abs(snr_computed - _REFERENCE_SNR) / _REFERENCE_SNR < 0.01
