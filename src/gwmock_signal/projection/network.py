@@ -10,6 +10,10 @@ from gwpy.timeseries import TimeSeries as GWpyTimeSeries
 from pycbc.detector import Detector as PyCBCDetector
 from scipy.interpolate import interp1d
 
+from gwmock_signal.detector import CustomDetector
+
+DetectorSpec = str | CustomDetector
+
 
 def _validate_polarizations(polarizations: Mapping[str, GWpyTimeSeries]) -> tuple[GWpyTimeSeries, GWpyTimeSeries]:
     """Validate ``plus``/``cross`` GWpy series share one time grid."""
@@ -33,25 +37,32 @@ def _validate_polarizations(polarizations: Mapping[str, GWpyTimeSeries]) -> tupl
     return hp, hc
 
 
-def _make_detectors(detector_names: Sequence[str]) -> list[tuple[str, PyCBCDetector]]:
-    """Instantiate PyCBC detectors; raise a clear error if a name is invalid."""
+def _make_detectors(detector_specs: Sequence[DetectorSpec]) -> list[tuple[str, PyCBCDetector]]:
+    """Instantiate PyCBC detectors; raise a clear error if a name is invalid.
+
+    Accepts either PyCBC/LAL IFO code strings or :class:`~gwmock_signal.detector.CustomDetector`
+    instances.
+    """
     out: list[tuple[str, PyCBCDetector]] = []
-    for raw in detector_names:
-        name = str(raw)
-        try:
-            det = PyCBCDetector(name)
-        except ValueError as exc:
-            raise ValueError(
-                f"Unknown or unsupported detector {name!r}. "
-                "Use a valid PyCBC/LAL interferometer code (e.g. 'H1', 'L1', 'V1')."
-            ) from exc
-        out.append((name, det))
+    for raw in detector_specs:
+        if isinstance(raw, CustomDetector):
+            out.append((raw.name, raw.to_pycbc()))
+        else:
+            name = str(raw)
+            try:
+                det = PyCBCDetector(name)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Unknown or unsupported detector {name!r}. "
+                    "Use a valid PyCBC/LAL interferometer code (e.g. 'H1', 'L1', 'V1')."
+                ) from exc
+            out.append((name, det))
     return out
 
 
 def project_polarizations_to_network(  # noqa: PLR0913
     polarizations: Mapping[str, GWpyTimeSeries],
-    detector_names: Sequence[str],
+    detector_names: Sequence[DetectorSpec],
     *,
     right_ascension: float,
     declination: float,
@@ -67,7 +78,9 @@ def project_polarizations_to_network(  # noqa: PLR0913
     Args:
         polarizations: Mapping containing ``plus`` and ``cross`` GWpy time series
             on a common grid.
-        detector_names: Sequence of IFO codes (e.g. ``H1``, ``L1``, ``V1``).
+        detector_names: Sequence of IFO codes (e.g. ``H1``, ``L1``, ``V1``) or
+            :class:`~gwmock_signal.detector.CustomDetector` instances, or a mix
+            of both.
         right_ascension: Source right ascension in radians.
         declination: Source declination in radians.
         polarization_angle: Polarization angle psi in radians (tensor modes).
@@ -85,10 +98,10 @@ def project_polarizations_to_network(  # noqa: PLR0913
             is not recognized by PyCBC.
     """
     hp, hc = _validate_polarizations(polarizations)
-    normalized_names = [str(n) for n in detector_names]
+    normalized_names = [d if isinstance(d, str) else d.name for d in detector_names]
     if len(set(normalized_names)) != len(normalized_names):
         raise ValueError("detector_names must not contain duplicates.")
-    detectors = _make_detectors(normalized_names)
+    detectors = _make_detectors(list(detector_names))
 
     time_array = cast(np.ndarray, hp.times.to_value())
     reference_time = float(0.5 * (time_array[0] + time_array[-1]))

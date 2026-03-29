@@ -1,0 +1,206 @@
+"""Unit tests for CustomDetector user-defined geometry."""
+
+from __future__ import annotations
+
+import math
+
+import numpy as np
+import pytest
+from pycbc.detector import Detector as PyCBCDetector
+
+from gwmock_signal.detector import CustomDetector
+
+# Exact H1 geodetic parameters from LAL CachedDetectors
+# (lal.CachedDetectors, prefix == "H1").
+_H1_LATITUDE_RAD = 0.81079526383
+_H1_LONGITUDE_RAD = -2.08405676917
+_H1_ELEVATION_M = 142.5540008544922
+_H1_XARM_AZIMUTH_RAD = 5.654877185821533
+_H1_YARM_AZIMUTH_RAD = 4.084080696105957
+_H1_XARM_TILT_RAD = -0.0006195000023581088
+_H1_YARM_TILT_RAD = 1.249999968422344e-05
+
+
+def _make_h1_custom(name: str = "H1_custom") -> CustomDetector:
+    """Make a CustomDetector with H1 coordinates."""
+    return CustomDetector(
+        name=name,
+        latitude_rad=_H1_LATITUDE_RAD,
+        longitude_rad=_H1_LONGITUDE_RAD,
+        elevation_m=_H1_ELEVATION_M,
+        xarm_azimuth_rad=_H1_XARM_AZIMUTH_RAD,
+        yarm_azimuth_rad=_H1_YARM_AZIMUTH_RAD,
+        xarm_tilt_rad=_H1_XARM_TILT_RAD,
+        yarm_tilt_rad=_H1_YARM_TILT_RAD,
+    )
+
+
+class TestCustomDetectorH1Validation:
+    """Verify CustomDetector with H1 coordinates reproduces Detector('H1') patterns."""
+
+    def test_antenna_pattern_matches_h1_at_10_sky_positions(self) -> None:
+        """H1 custom geometry must agree with Detector('H1') to < 1e-6 relative error."""
+        custom = _make_h1_custom()
+        ref = PyCBCDetector("H1")
+
+        rng = np.random.default_rng(42)
+        n = 10
+        ras = rng.uniform(0, 2 * math.pi, n)
+        decs = rng.uniform(-math.pi / 2, math.pi / 2, n)
+        psis = rng.uniform(0, math.pi, n)
+        t_ref = 1126259462.0
+        ts = rng.uniform(t_ref, t_ref + 1e6, n)
+
+        pycbc_custom = custom.to_pycbc()
+        for i in range(n):
+            fp_c, fc_c = pycbc_custom.antenna_pattern(ras[i], decs[i], psis[i], ts[i], polarization_type="tensor")
+            fp_r, fc_r = ref.antenna_pattern(ras[i], decs[i], psis[i], ts[i], polarization_type="tensor")
+            err_p = abs(fp_c - fp_r) / (abs(fp_r) + 1e-30)
+            err_c = abs(fc_c - fc_r) / (abs(fc_r) + 1e-30)
+            assert err_p < 1e-6, f"F+ relative error {err_p:.2e} at sample {i} exceeds 1e-6"
+            assert err_c < 1e-6, f"Fx relative error {err_c:.2e} at sample {i} exceeds 1e-6"
+
+    def test_to_pycbc_returns_pycbc_detector(self) -> None:
+        """to_pycbc() must return a PyCBC Detector instance."""
+        custom = _make_h1_custom(name="H1_pycbc_type_check")
+        det = custom.to_pycbc()
+        assert isinstance(det, PyCBCDetector)
+
+    def test_to_pycbc_is_cached(self) -> None:
+        """Repeated calls to to_pycbc() must return the same object."""
+        custom = _make_h1_custom(name="H1_cache_check")
+        det1 = custom.to_pycbc()
+        det2 = custom.to_pycbc()
+        assert det1 is det2
+
+
+class TestCustomDetectorValidation:
+    """Test __post_init__ geometry validation."""
+
+    def test_invalid_latitude_too_high_raises_value_error(self) -> None:
+        """Latitude > pi/2 must raise ValueError."""
+        with pytest.raises(ValueError, match="latitude_rad"):
+            CustomDetector(
+                name="bad",
+                latitude_rad=math.pi,
+                longitude_rad=0.0,
+                elevation_m=0.0,
+                xarm_azimuth_rad=0.0,
+                yarm_azimuth_rad=math.pi / 2,
+            )
+
+    def test_invalid_latitude_too_low_raises_value_error(self) -> None:
+        """Latitude < -pi/2 must raise ValueError."""
+        with pytest.raises(ValueError, match="latitude_rad"):
+            CustomDetector(
+                name="bad",
+                latitude_rad=-math.pi,
+                longitude_rad=0.0,
+                elevation_m=0.0,
+                xarm_azimuth_rad=0.0,
+                yarm_azimuth_rad=math.pi / 2,
+            )
+
+    def test_invalid_longitude_too_high_raises_value_error(self) -> None:
+        """Longitude > 2*pi must raise ValueError."""
+        with pytest.raises(ValueError, match="longitude_rad"):
+            CustomDetector(
+                name="bad",
+                latitude_rad=0.0,
+                longitude_rad=2 * math.pi,
+                elevation_m=0.0,
+                xarm_azimuth_rad=0.0,
+                yarm_azimuth_rad=math.pi / 2,
+            )
+
+    def test_invalid_longitude_too_low_raises_value_error(self) -> None:
+        """Longitude < -2*pi must raise ValueError."""
+        with pytest.raises(ValueError, match="longitude_rad"):
+            CustomDetector(
+                name="bad",
+                latitude_rad=0.0,
+                longitude_rad=-2 * math.pi,
+                elevation_m=0.0,
+                xarm_azimuth_rad=0.0,
+                yarm_azimuth_rad=math.pi / 2,
+            )
+
+    def test_invalid_elevation_too_low_raises_value_error(self) -> None:
+        """Elevation < -1e7 m (and < -1e4 m) must raise ValueError."""
+        with pytest.raises(ValueError, match="elevation_m"):
+            CustomDetector(
+                name="bad",
+                latitude_rad=0.0,
+                longitude_rad=0.0,
+                elevation_m=-1e7,
+                xarm_azimuth_rad=0.0,
+                yarm_azimuth_rad=math.pi / 2,
+            )
+
+    def test_invalid_elevation_too_high_raises_value_error(self) -> None:
+        """Elevation > 2e5 m must raise ValueError."""
+        with pytest.raises(ValueError, match="elevation_m"):
+            CustomDetector(
+                name="bad",
+                latitude_rad=0.0,
+                longitude_rad=0.0,
+                elevation_m=2e5,
+                xarm_azimuth_rad=0.0,
+                yarm_azimuth_rad=math.pi / 2,
+            )
+
+    def test_valid_geometry_does_not_raise(self) -> None:
+        """Boundary-safe values must not raise."""
+        det = CustomDetector(
+            name="ok",
+            latitude_rad=0.0,
+            longitude_rad=0.0,
+            elevation_m=0.0,
+            xarm_azimuth_rad=0.0,
+            yarm_azimuth_rad=math.pi / 2,
+        )
+        assert det.name == "ok"
+
+
+class TestMixedNetworkProjection:
+    """Test project_polarizations_to_network with a mixed str/CustomDetector list."""
+
+    def test_mixed_list_produces_output_for_each_detector(self) -> None:
+        """project_polarizations_to_network must accept str + CustomDetector."""
+        from gwpy.timeseries import TimeSeries as GWpyTimeSeries
+
+        from gwmock_signal.projection.network import project_polarizations_to_network
+
+        n = 128
+        sample_rate = 4096.0
+        t0 = 1126259462.0
+        dt = 1.0 / sample_rate
+        times = np.arange(n) * dt
+
+        hp = GWpyTimeSeries(np.sin(2 * math.pi * 30 * times), t0=t0, sample_rate=sample_rate)
+        hc = GWpyTimeSeries(np.cos(2 * math.pi * 30 * times), t0=t0, sample_rate=sample_rate)
+        polarizations = {"plus": hp, "cross": hc}
+
+        custom_l1 = CustomDetector(
+            name="L1_custom",
+            latitude_rad=0.53342313506,
+            longitude_rad=-1.58430937078,
+            elevation_m=-6.574,
+            xarm_azimuth_rad=4.40317772346,
+            yarm_azimuth_rad=2.83238139666,
+            xarm_tilt_rad=-3.121e-4,
+            yarm_tilt_rad=-6.107e-4,
+        )
+
+        result = project_polarizations_to_network(
+            polarizations,
+            ["H1", custom_l1],
+            right_ascension=1.2,
+            declination=0.3,
+            polarization_angle=0.5,
+        )
+
+        assert set(result.keys()) == {"H1", "L1_custom"}
+        for key, ts in result.items():
+            assert isinstance(ts, GWpyTimeSeries), f"{key}: expected GWpyTimeSeries"
+            assert len(ts) == n
