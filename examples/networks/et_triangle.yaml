@@ -1,0 +1,8 @@
+# Einstein Telescope triangle configuration.
+# Three 60-degree interferometers sharing the same site.
+# PyCBC/LAL codes: E1, E2, E3 (lal.ET1/ET2/ET3_DETECTOR_PREFIX).
+name: ET-triangle
+detectors:
+    - name: E1
+    - name: E2
+    - name: E3

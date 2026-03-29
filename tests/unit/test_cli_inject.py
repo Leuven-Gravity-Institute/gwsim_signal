@@ -154,8 +154,32 @@ def test_inject_cbc_unknown_network(params_file: Path) -> None:
     assert result.exit_code != 0
 
 
+def test_inject_cbc_comma_separated_codes(params_file: Path) -> None:
+    """--network accepts comma-separated PyCBC detector codes (no named preset needed)."""
+    result = runner.invoke(
+        app,
+        [
+            "inject",
+            "cbc",
+            "--params",
+            str(params_file),
+            "--network",
+            "H1,L1",
+            "--duration",
+            _DURATION,
+            "--sample-rate",
+            _SAMPLE_RATE,
+            "--f-min",
+            _F_MIN,
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "H1" in result.output
+    assert "L1" in result.output
+
+
 def test_inject_cbc_file_based_network_rejected(params_file: Path, tmp_path: Path) -> None:
-    """Passing an existing file path as --network is rejected with a non-zero exit."""
+    """Passing an invalid JSON file as --network exits with non-zero status."""
     net_file = tmp_path / "network.json"
     net_file.write_text("{}")
     result = runner.invoke(
@@ -163,6 +187,34 @@ def test_inject_cbc_file_based_network_rejected(params_file: Path, tmp_path: Pat
         ["inject", "cbc", "--params", str(params_file), "--network", str(net_file)],
     )
     assert result.exit_code != 0
+
+
+def test_inject_cbc_yaml_network_file_accepted(params_file: Path, tmp_path: Path) -> None:
+    """Passing a valid YAML network file as --network succeeds and prints a summary."""
+    import yaml
+
+    net_file = tmp_path / "h1l1.yaml"
+    net_file.write_text(yaml.dump({"name": "H1L1", "detectors": [{"name": "H1"}, {"name": "L1"}]}))
+    result = runner.invoke(
+        app,
+        [
+            "inject",
+            "cbc",
+            "--params",
+            str(params_file),
+            "--network",
+            str(net_file),
+            "--duration",
+            _DURATION,
+            "--sample-rate",
+            _SAMPLE_RATE,
+            "--f-min",
+            _F_MIN,
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "H1" in result.output
+    assert "rms=" in result.output
 
 
 def test_inject_cbc_seed_accepted(params_file: Path) -> None:
