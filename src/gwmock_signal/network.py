@@ -32,10 +32,6 @@ _NETWORK_PRESETS: dict[str, tuple[str, ...]] = {
     "ET-L": ("E0",),
 }
 
-# Backward-compatible alias kept so existing imports of ``_CATALOG`` continue
-# to work unchanged.
-_CATALOG = _NETWORK_PRESETS
-
 # Required geometry keys that trigger CustomDetector construction in from_file.
 _geometry_keys: frozenset[str] = frozenset(
     {"latitude_deg", "longitude_deg", "elevation_m", "xarm_azimuth_deg", "yarm_azimuth_deg"}
