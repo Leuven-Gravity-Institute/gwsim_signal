@@ -21,7 +21,7 @@ inject_app = typer.Typer(
 
 
 @inject_app.command("cbc")
-def cbc(  # noqa: PLR0913
+def cbc(  # noqa: PLR0912, PLR0913
     params: Annotated[
         Path,
         typer.Option("--params", help="Path to JSON file with CBC injection parameters.", show_default=False),
@@ -102,7 +102,12 @@ def cbc(  # noqa: PLR0913
         raise typer.BadParameter("--f-min must be > 0", param_hint="--f-min")
 
     # Build zero-noise background centred on tc
-    tc = float(cbc_params["tc"])
+    try:
+        tc = float(cbc_params["tc"])
+    except KeyError:
+        raise typer.BadParameter("Missing required parameter: 'tc'", param_hint="--params") from None
+    except (TypeError, ValueError):
+        raise typer.BadParameter("Parameter 'tc' must be a number", param_hint="--params") from None
     n_samples = int(duration * sample_rate)
     background = {
         name: TimeSeries(
