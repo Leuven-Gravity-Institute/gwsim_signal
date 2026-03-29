@@ -64,6 +64,19 @@ class CustomDetector:
         _elev_min = -1e4
         _elev_max = 1e5
         half_pi = math.pi / 2.0
+
+        if not self.name.strip():
+            raise ValueError("name must be a non-empty string.")
+
+        for field_name, value in (
+            ("xarm_azimuth_rad", self.xarm_azimuth_rad),
+            ("yarm_azimuth_rad", self.yarm_azimuth_rad),
+            ("xarm_tilt_rad", self.xarm_tilt_rad),
+            ("yarm_tilt_rad", self.yarm_tilt_rad),
+        ):
+            if not math.isfinite(value):
+                raise ValueError(f"{field_name} must be finite; got {value!r}.")
+
         if not (-half_pi <= self.latitude_rad <= half_pi):
             raise ValueError(f"latitude_rad must be in [-pi/2, pi/2]; got {self.latitude_rad!r}.")
         if not (-math.pi <= self.longitude_rad <= math.pi):
