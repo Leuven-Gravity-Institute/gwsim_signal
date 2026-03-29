@@ -59,7 +59,6 @@ nav = [
   ] },
   { "Security" = "security.md" },
   { "Contributing" = "contributing.md" },
-  { "Project tracker" = "dev/project-tracker.md" },
   { "Troubleshooting" = "dev/troubleshooting.md" },
   { "API" = [
     { "Overview" = "api/index.md" },

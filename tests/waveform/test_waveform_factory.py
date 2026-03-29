@@ -12,6 +12,36 @@ from gwpy.timeseries import TimeSeries
 from gwmock_signal.waveform import WaveformFactory, pycbc_waveform_wrapper
 
 
+def test_list_models_returns_list() -> None:
+    """list_models() returns a non-empty list containing built-in approximants."""
+    factory = WaveformFactory()
+    models = factory.list_models()
+    assert isinstance(models, list)
+    assert "IMRPhenomD" in models
+
+
+def test_register_model_non_callable_raises_type_error() -> None:
+    """Registering a non-callable raises TypeError."""
+    factory = WaveformFactory()
+    with pytest.raises(TypeError, match="not callable"):
+        factory.register_model("bad", 42)  # type: ignore[arg-type]
+
+
+def test_register_model_string_no_colon_no_dot_raises_value_error() -> None:
+    """A bare string without ':' or '.' raises ValueError."""
+    factory = WaveformFactory()
+    with pytest.raises(ValueError, match=r"module.path:callable"):
+        factory.register_model("bad", "nodots_and_no_colon")
+
+
+def test_generate_with_waveform_model_in_params_raises_value_error() -> None:
+    """Passing 'waveform_model' inside parameters raises ValueError."""
+    factory = WaveformFactory()
+    factory.register_model("toy", lambda **kw: {"plus": None, "cross": None})
+    with pytest.raises(ValueError, match="waveform_model"):
+        factory.generate("toy", {"waveform_model": "toy"})
+
+
 def test_get_model_unknown_raises():
     """Unknown model names raise `ValueError`."""
     factory = WaveformFactory()
@@ -57,10 +87,17 @@ def test_register_and_generate_toy():
 
 
 def test_register_model_string_import():
-    """String `register_model` path resolves to the same callable object."""
+    """String `register_model` path with ':' resolves to the same callable object."""
     factory = WaveformFactory()
     factory.register_model("pycbc_alias", "gwmock_signal.waveform.pycbc_wrapper:pycbc_waveform_wrapper")
     assert factory.get_model("pycbc_alias") is pycbc_waveform_wrapper
+
+
+def test_register_model_string_dotted_import() -> None:
+    """Dotted string without ':' resolves the callable via rsplit on the last '.'."""
+    factory = WaveformFactory()
+    factory.register_model("pycbc_dotted", "gwmock_signal.waveform.pycbc_wrapper.pycbc_waveform_wrapper")
+    assert factory.get_model("pycbc_dotted") is pycbc_waveform_wrapper
 
 
 @patch("gwmock_signal.waveform.pycbc_wrapper.get_td_waveform")
