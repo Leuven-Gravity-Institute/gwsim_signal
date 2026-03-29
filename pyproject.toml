@@ -143,3 +143,11 @@ docstring-code-format = true # Format code in docstrings
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore specific rules in the tests directory
+"tests/*" = ["S101", "ARG001", "PLC0415", "PLR2004"]
+# S101: allow assert statements
+# ARG001: allow unused function arguments (common in fixtures)
+# PLC0415: allow import statements not at the top level
+# PLR2004: allow magic values in the unit tests
