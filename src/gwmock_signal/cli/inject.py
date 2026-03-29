@@ -94,6 +94,13 @@ def cbc(  # noqa: PLR0913
     if seed is not None:
         np.random.seed(seed)
 
+    if sample_rate <= 0:
+        raise typer.BadParameter("--sample-rate must be > 0", param_hint="--sample-rate")
+    if duration <= 0:
+        raise typer.BadParameter("--duration must be > 0", param_hint="--duration")
+    if f_min <= 0:
+        raise typer.BadParameter("--f-min must be > 0", param_hint="--f-min")
+
     # Build zero-noise background centred on tc
     tc = float(cbc_params["tc"])
     n_samples = int(duration * sample_rate)
