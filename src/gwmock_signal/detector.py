@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import math
+import uuid
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class CustomDetector:
     """A user-defined ground-based gravitational-wave detector.
 
@@ -52,6 +53,9 @@ class CustomDetector:
     xarm_tilt_rad: float = 0.0
     yarm_tilt_rad: float = 0.0
 
+    # Private PyCBC registration key — unique per instance to avoid collisions
+    # with built-in detector names or other CustomDetector instances.
+    _pycbc_key: str = field(default="", init=False, repr=False, compare=False)
     # Cache for the PyCBC Detector object; not exposed as a public attribute.
     _pycbc_detector: pycbc.detector.Detector | None = field(default=None, init=False, repr=False, compare=False)
 
@@ -66,6 +70,7 @@ class CustomDetector:
             raise ValueError(f"longitude_rad must be in [-pi, pi]; got {self.longitude_rad!r}.")
         if not (_elev_min <= self.elevation_m <= _elev_max):
             raise ValueError(f"elevation_m must be in [-1e4, 1e5] m; got {self.elevation_m!r}.")
+        object.__setattr__(self, "_pycbc_key", f"_gwmock_{uuid.uuid4().hex}")
 
     def to_pycbc(self) -> pycbc.detector.Detector:
         """Return a PyCBC :class:`~pycbc.detector.Detector` for this geometry.
@@ -80,7 +85,7 @@ class CustomDetector:
         """
         if self._pycbc_detector is None:
             pycbc.detector.add_detector_on_earth(
-                self.name,
+                self._pycbc_key,
                 self.longitude_rad,
                 self.latitude_rad,
                 yangle=self.yarm_azimuth_rad,
@@ -89,5 +94,7 @@ class CustomDetector:
                 xaltitude=self.xarm_tilt_rad,
                 yaltitude=self.yarm_tilt_rad,
             )
-            self._pycbc_detector = pycbc.detector.Detector(self.name)
-        return self._pycbc_detector  # type: ignore[return-value]
+            object.__setattr__(self, "_pycbc_detector", pycbc.detector.Detector(self._pycbc_key))
+        if self._pycbc_detector is None:
+            raise RuntimeError(f"Failed to register detector {self.name!r} with PyCBC.")
+        return self._pycbc_detector
