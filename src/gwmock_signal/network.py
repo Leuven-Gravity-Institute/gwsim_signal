@@ -218,7 +218,7 @@ class Network:
                 raise ValueError("Each detector entry must be a mapping with a 'name' field.")
             detectors.append(_detector_from_entry(entry))
 
-        return cls(name=data["name"], detector_names=tuple(detectors))
+        return cls.from_detectors(detectors, name=data["name"])
 
     # ------------------------------------------------------------------
     # Listing helpers
