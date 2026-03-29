@@ -30,7 +30,7 @@ _CATALOG: dict[str, tuple[str, ...]] = {
 class Network:
     """A named detector network with an ordered tuple of PyCBC detector codes.
 
-    Attributes:s
+    Attributes:
         name: The alias identifying this network (e.g. ``"H1L1V1"``).
         detector_names: Ordered tuple of PyCBC/LAL detector prefix codes
             (e.g. ``("H1", "L1", "V1")``).
