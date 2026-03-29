@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
 from gwmock_signal.cli.main import app
+
+_ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+
 
 runner = CliRunner()
 
@@ -154,6 +158,7 @@ def test_inject_cbc_help() -> None:
     """`inject cbc --help` displays all expected options."""
     result = runner.invoke(app, ["inject", "cbc", "--help"])
     assert result.exit_code == 0
+    clean = _ANSI_ESCAPE.sub("", result.output)
     for opt in [
         "--params",
         "--network",
@@ -164,4 +169,4 @@ def test_inject_cbc_help() -> None:
         "--approximant",
         "--seed",
     ]:
-        assert opt in result.output, f"Missing option {opt!r} in --help output"
+        assert opt in clean, f"Missing option {opt!r} in --help output"
