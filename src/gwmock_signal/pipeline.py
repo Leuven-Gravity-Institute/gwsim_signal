@@ -11,6 +11,7 @@ from typing import Any
 
 from gwpy.timeseries import TimeSeries
 
+from gwmock_signal.detector import CustomDetector
 from gwmock_signal.multichannel.stack import DetectorStrainStack
 from gwmock_signal.simulator import CBCSimulator
 
@@ -18,7 +19,7 @@ from gwmock_signal.simulator import CBCSimulator
 def inject_cbc_signal(  # noqa: PLR0913
     waveform_model: str,
     params: dict[str, Any],
-    detector_names: Sequence[str],
+    detector_names: Sequence[str | CustomDetector],
     background: Mapping[str, TimeSeries],
     *,
     sampling_frequency: float,

@@ -10,6 +10,7 @@ import numpy as np
 import typer
 from gwpy.timeseries import TimeSeries, TimeSeriesDict
 
+from gwmock_signal.detector import CustomDetector
 from gwmock_signal.network import Network
 from gwmock_signal.pipeline import inject_cbc_signal
 
@@ -30,7 +31,10 @@ def cbc(  # noqa: PLR0912, PLR0913
         str,
         typer.Option(
             "--network",
-            help="Named network catalog entry (e.g. H1L1V1). Run `gwmock-signal network list` for available names.",
+            help=(
+                "Named network preset (e.g. H1L1V1) or comma-separated PyCBC detector codes "
+                "(e.g. H1,L1,V1).  Any code from Network.list_pycbc_detectors() is accepted."
+            ),
         ),
     ],
     output: Annotated[
@@ -78,18 +82,28 @@ def cbc(  # noqa: PLR0912, PLR0913
     except json.JSONDecodeError as exc:
         raise typer.BadParameter(f"Invalid JSON in {params}: {exc}", param_hint="--params") from exc
 
-    # Resolve network: file path takes priority over catalog name
+    # Resolve network: file path (existing or recognised extension) uses from_file;
+    # otherwise look up the pre-defined catalog.
     network_path = Path(network)
-    if network_path.exists():
-        raise typer.BadParameter(
-            f"File-based network definitions are not yet supported (planned in ISS-007). "
-            f"Use a named catalog entry instead. Available names: {Network.list_names()}",
-            param_hint="--network",
-        )
-    try:
-        net = Network.from_name(network)
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc), param_hint="--network") from exc
+    if network_path.exists() or network_path.suffix.lower() in (".yaml", ".yml", ".json"):
+        try:
+            net = Network.from_file(network_path)
+        except (ValueError, FileNotFoundError) as exc:
+            raise typer.BadParameter(str(exc), param_hint="--network") from exc
+    else:
+        try:
+            net = Network.from_name(network)
+        except ValueError:
+            codes = [c.strip() for c in network.split(",")]
+            try:
+                net = Network.from_detectors(codes, name=network)
+            except ValueError as exc:
+                raise typer.BadParameter(
+                    f"{exc}\n"
+                    f"Named presets: {Network.list_names()}. "
+                    "Or pass comma-separated PyCBC codes, e.g. H1,L1,V1.",
+                    param_hint="--network",
+                ) from exc
 
     if seed is not None:
         np.random.seed(seed)
@@ -108,6 +122,9 @@ def cbc(  # noqa: PLR0912, PLR0913
         raise typer.BadParameter("Missing required parameter: 'tc'", param_hint="--params") from None
     except (TypeError, ValueError):
         raise typer.BadParameter("Parameter 'tc' must be a number", param_hint="--params") from None
+    # Normalise to plain string names for background dict keys and output labels.
+    det_str_names = [d.name if isinstance(d, CustomDetector) else d for d in net.detector_names]
+
     n_samples = int(duration * sample_rate)
     background = {
         name: TimeSeries(
@@ -115,7 +132,7 @@ def cbc(  # noqa: PLR0912, PLR0913
             t0=tc - duration / 2,
             sample_rate=sample_rate,
         )
-        for name in net.detector_names
+        for name in det_str_names
     }
 
     # Run the injection pipeline
@@ -132,7 +149,7 @@ def cbc(  # noqa: PLR0912, PLR0913
         tsd = TimeSeriesDict(result.to_dict())
         tsd.write(str(output), format="hdf5")
     else:
-        for name in net.detector_names:
+        for name in det_str_names:
             ts = result[name]
             rms = float(np.sqrt(np.mean(ts.value**2)))
             typer.echo(f"{name}  rms={rms:.4e}  duration={ts.duration.value:.1f}s")

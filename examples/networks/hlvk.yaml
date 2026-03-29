@@ -1,0 +1,8 @@
+# LIGO Hanford + LIGO Livingston + Virgo + KAGRA network.
+# PyCBC/LAL codes: H1, L1, V1, K1 (lal.KAGRA_DETECTOR_PREFIX).
+name: HLVK
+detectors:
+    - name: H1
+    - name: L1
+    - name: V1
+    - name: K1

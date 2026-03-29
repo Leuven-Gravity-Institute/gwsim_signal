@@ -9,6 +9,7 @@ from typing import Any
 
 from gwpy.timeseries import TimeSeries
 
+from gwmock_signal.detector import CustomDetector
 from gwmock_signal.injection import inject_strain
 from gwmock_signal.multichannel.stack import DetectorStrainStack
 from gwmock_signal.projection.network import project_polarizations_to_network
@@ -99,7 +100,7 @@ class TransientSimulator(GWSimulator):
     def simulate(  # noqa: PLR0913
         self,
         params: dict[str, Any],
-        detector_names: Sequence[str],
+        detector_names: Sequence[str | CustomDetector],
         background: Mapping[str, TimeSeries],
         *,
         sampling_frequency: float,
@@ -141,6 +142,9 @@ class TransientSimulator(GWSimulator):
         if missing_projection:
             raise ValueError(f"Missing required parameters: {sorted(missing_projection)}")
 
+        # Normalise detector entries so dict lookups use plain string keys.
+        str_names: list[str] = [d.name if isinstance(d, CustomDetector) else d for d in detector_names]
+
         hp, hc = self.generate_polarizations(params, sampling_frequency, minimum_frequency)
         projected = project_polarizations_to_network(
             {"plus": hp, "cross": hc},
@@ -156,9 +160,9 @@ class TransientSimulator(GWSimulator):
                 projected[name],
                 interpolate_if_offset=interpolate_if_offset,
             )
-            for name in detector_names
+            for name in str_names
         }
-        return DetectorStrainStack.from_mapping(detector_names, injected)
+        return DetectorStrainStack.from_mapping(str_names, injected)
 
 
 class CBCSimulator(TransientSimulator):
