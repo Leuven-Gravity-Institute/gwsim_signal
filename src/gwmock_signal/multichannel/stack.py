@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
+from pathlib import Path
+from typing import Literal
 
+import h5py
 import numpy as np
 from astropy.units.quantity import Quantity
-from gwpy.timeseries import TimeSeries
+from gwpy.timeseries import TimeSeries, TimeSeriesDict
 
 
 def _validate_aligned_channels(channels: Sequence[TimeSeries]) -> None:
@@ -163,6 +167,113 @@ class DetectorStrainStack:
             Number of detectors (channels).
         """
         return len(self._channels)
+
+    def write(
+        self,
+        path: str | Path,
+        format: Literal["gwf", "hdf5", "npy", "txt"] = "hdf5",  # noqa: A002
+    ) -> None:
+        """Write the stack to a file.
+
+        Args:
+            path: Output file path.
+            format: Output format — one of ``'gwf'``, ``'hdf5'``, ``'npy'``,
+                or ``'txt'``. Defaults to ``'hdf5'``.
+
+        Raises:
+            ValueError: If ``format`` is not recognised.
+
+        Note:
+            GWF writing requires an optional frame library
+            (``python-ldas-tools-framecpp`` or ``framel``).  Install via your
+            system package manager or conda.
+        """
+        path = Path(path)
+        t0_val = float(self.t0.value)
+        dt_val = 1.0 / float(self.sample_rate.value)
+        channel_names = list(self._names)
+
+        if format == "gwf":
+            tsd = TimeSeriesDict()
+            for name, ts in zip(self._names, self._channels, strict=True):
+                ts_named = ts.copy()
+                ts_named.name = name
+                tsd[name] = ts_named
+            tsd.write(str(path), format="gwf")
+
+        elif format == "hdf5":
+            with h5py.File(path, "w") as fh:
+                for name, ts in zip(self._names, self._channels, strict=True):
+                    ds = fh.create_dataset(name, data=np.asarray(ts.value, dtype=np.float64))
+                    ds.attrs["t0"] = t0_val
+                    ds.attrs["dt"] = dt_val
+                    ds.attrs["unit"] = "strain"
+
+        elif format == "npy":
+            arr = np.stack([np.asarray(ts.value, dtype=np.float64) for ts in self._channels], axis=1)
+            np.save(path, arr)
+            sidecar = Path(path).with_suffix(".json")
+            sidecar.write_text(json.dumps({"t0": t0_val, "dt": dt_val, "channels": channel_names}))
+
+        elif format == "txt":
+            arr = np.stack([np.asarray(ts.value, dtype=np.float64) for ts in self._channels], axis=1)
+            header = f"t0={t0_val} dt={dt_val} channels={','.join(channel_names)}"
+            np.savetxt(path, arr, header=header)
+
+        else:
+            raise ValueError(f"Unknown format {format!r}. Choose from 'gwf', 'hdf5', 'npy', 'txt'.")
+
+    @classmethod
+    def read(
+        cls,
+        path: str | Path,
+        format: Literal["hdf5", "npy"],  # noqa: A002
+    ) -> DetectorStrainStack:
+        """Reconstruct a ``DetectorStrainStack`` from an HDF5 or npy file.
+
+        Args:
+            path: Input file path.  For ``'npy'`` format a JSON sidecar at
+                ``<stem>.json`` must also be present.
+            format: Input format — ``'hdf5'`` or ``'npy'``.
+
+        Returns:
+            Reconstructed ``DetectorStrainStack``.
+
+        Raises:
+            NotImplementedError: If ``format`` is ``'gwf'`` or ``'txt'``
+                (write-only formats).
+            ValueError: If ``format`` is not recognised.
+        """
+        path = Path(path)
+
+        if format in ("gwf", "txt"):
+            raise NotImplementedError(f"Reading format {format!r} is not yet supported.")
+
+        if format == "hdf5":
+            with h5py.File(path, "r") as fh:
+                names = list(fh.keys())
+                channels = []
+                for name in names:
+                    ds = fh[name]
+                    data = ds[...]
+                    t0 = float(ds.attrs["t0"])
+                    dt = float(ds.attrs["dt"])
+                    channels.append(TimeSeries(data, t0=t0, dt=dt, unit="strain", name=name))
+            return cls(tuple(names), tuple(channels))
+
+        if format == "npy":
+            arr = np.load(path)
+            sidecar = path.with_suffix(".json")
+            meta = json.loads(sidecar.read_text())
+            t0 = float(meta["t0"])
+            dt = float(meta["dt"])
+            channel_names = meta["channels"]
+            channels = [
+                TimeSeries(arr[:, i], t0=t0, dt=dt, unit="strain", name=name) for i, name in enumerate(channel_names)
+            ]
+            return cls(tuple(channel_names), tuple(channels))
+
+        raise ValueError(f"Unknown format {format!r}. Choose from 'hdf5', 'npy'.")
 
     def to_dict(self) -> dict[str, TimeSeries]:
         """Map detector name to GWpy series (same objects as ``__getitem__``).
