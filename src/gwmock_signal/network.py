@@ -49,10 +49,6 @@ _geometry_keys: frozenset[str] = frozenset(
     }
 )
 
-# Required angle base-names (elevation is handled separately as it is not an angle).
-_required_angles: tuple[str, ...] = ("latitude", "longitude", "xarm_azimuth", "yarm_azimuth")
-_optional_angles: tuple[str, ...] = ("xarm_tilt", "yarm_tilt")
-
 
 def _parse_angle(entry: dict, base: str, *, required: bool, default: float = 0.0) -> float:
     """Return an angle in radians from *entry*, accepting ``{base}_deg`` or ``{base}_rad``.
