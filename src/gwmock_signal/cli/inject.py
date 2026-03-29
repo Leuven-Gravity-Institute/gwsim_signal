@@ -30,7 +30,7 @@ def cbc(  # noqa: PLR0913
         str,
         typer.Option(
             "--network",
-            help="Named network catalog entry (e.g. H1L1V1) or path to a network definition file.",
+            help="Named network catalog entry (e.g. H1L1V1). Run `gwmock-signal network list` for available names.",
         ),
     ],
     output: Annotated[
