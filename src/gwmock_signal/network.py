@@ -32,10 +32,56 @@ _NETWORK_PRESETS: dict[str, tuple[str, ...]] = {
     "ET-L": ("E0",),
 }
 
-# Required geometry keys that trigger CustomDetector construction in from_file.
+# Keys whose presence in an entry signals a full custom geometry rather than a
+# plain PyCBC alias string.  Both *_deg and *_rad variants are included so that
+# either convention triggers CustomDetector construction.
 _geometry_keys: frozenset[str] = frozenset(
-    {"latitude_deg", "longitude_deg", "elevation_m", "xarm_azimuth_deg", "yarm_azimuth_deg"}
+    {
+        "latitude_deg",
+        "latitude_rad",
+        "longitude_deg",
+        "longitude_rad",
+        "elevation_m",
+        "xarm_azimuth_deg",
+        "xarm_azimuth_rad",
+        "yarm_azimuth_deg",
+        "yarm_azimuth_rad",
+    }
 )
+
+# Required angle base-names (elevation is handled separately as it is not an angle).
+_required_angles: tuple[str, ...] = ("latitude", "longitude", "xarm_azimuth", "yarm_azimuth")
+_optional_angles: tuple[str, ...] = ("xarm_tilt", "yarm_tilt")
+
+
+def _parse_angle(entry: dict, base: str, *, required: bool, default: float = 0.0) -> float:
+    """Return an angle in radians from *entry*, accepting ``{base}_deg`` or ``{base}_rad``.
+
+    Args:
+        entry: Detector config mapping.
+        base: Angle parameter base name (e.g. ``"latitude"``).
+        required: If ``True`` raise :class:`ValueError` when neither key is present.
+        default: Value returned when both keys are absent and ``required`` is ``False``.
+
+    Raises:
+        ValueError: If both ``{base}_deg`` and ``{base}_rad`` are present simultaneously.
+        ValueError: If ``required`` is ``True`` and neither key is present.
+    """
+    deg_key = f"{base}_deg"
+    rad_key = f"{base}_rad"
+    has_deg = deg_key in entry
+    has_rad = rad_key in entry
+    if has_deg and has_rad:
+        raise ValueError(
+            f"Conflicting angle specification for '{base}': provide either '{deg_key}' or '{rad_key}', not both."
+        )
+    if has_deg:
+        return math.radians(float(entry[deg_key]))
+    if has_rad:
+        return float(entry[rad_key])
+    if required:
+        raise ValueError(f"Missing required angle '{base}': provide either '{deg_key}' or '{rad_key}'.")
+    return default
 
 
 def _load_data(path: Path) -> object:
@@ -63,26 +109,31 @@ def _detector_from_entry(entry: dict) -> str | CustomDetector:
         or a :class:`CustomDetector` instance.
 
     Raises:
-        ValueError: If a required geometry field is absent.
+        ValueError: If a required angle is absent or if both ``*_deg`` and
+            ``*_rad`` variants of the same angle are present simultaneously.
     """
     from gwmock_signal.detector import CustomDetector  # noqa: PLC0415
 
     det_name: str = entry["name"]
     if not _geometry_keys & set(entry.keys()):
         return det_name
-    for key in _geometry_keys:
-        if key not in entry:
-            raise ValueError(f"Missing required geometry field: '{key}' for detector {det_name!r}.")
-    return CustomDetector(
-        name=det_name,
-        latitude_rad=math.radians(entry["latitude_deg"]),
-        longitude_rad=math.radians(entry["longitude_deg"]),
-        elevation_m=float(entry["elevation_m"]),
-        xarm_azimuth_rad=math.radians(entry["xarm_azimuth_deg"]),
-        yarm_azimuth_rad=math.radians(entry["yarm_azimuth_deg"]),
-        xarm_tilt_rad=float(entry.get("xarm_tilt_rad", 0.0)),
-        yarm_tilt_rad=float(entry.get("yarm_tilt_rad", 0.0)),
-    )
+
+    if "elevation_m" not in entry:
+        raise ValueError(f"Missing required geometry field: 'elevation_m' for detector {det_name!r}.")
+
+    try:
+        return CustomDetector(
+            name=det_name,
+            latitude_rad=_parse_angle(entry, "latitude", required=True),
+            longitude_rad=_parse_angle(entry, "longitude", required=True),
+            elevation_m=float(entry["elevation_m"]),
+            xarm_azimuth_rad=_parse_angle(entry, "xarm_azimuth", required=True),
+            yarm_azimuth_rad=_parse_angle(entry, "yarm_azimuth", required=True),
+            xarm_tilt_rad=_parse_angle(entry, "xarm_tilt", required=False, default=0.0),
+            yarm_tilt_rad=_parse_angle(entry, "yarm_tilt", required=False, default=0.0),
+        )
+    except ValueError as exc:
+        raise ValueError(f"Detector {det_name!r}: {exc}") from exc
 
 
 @dataclass(frozen=True)
@@ -179,11 +230,27 @@ class Network:
 
         The file must have a top-level ``name`` key (str) and a ``detectors``
         key containing a non-empty list of detector entries.  Each entry must
-        have a ``name`` field.  If any geometry keys are present
-        (``latitude_deg``, ``longitude_deg``, ``elevation_m``,
-        ``xarm_azimuth_deg``, ``yarm_azimuth_deg``), a
+        have a ``name`` field.  If any geometry key is present a
         :class:`~gwmock_signal.detector.CustomDetector` is constructed;
-        otherwise the name is treated as a PyCBC alias string.
+        otherwise the name is treated as a plain PyCBC detector code string.
+
+        **Angle conventions** — every angle parameter accepts either a degrees
+        variant (``*_deg``) or a radians variant (``*_rad``), but *not both* for
+        the same parameter:
+
+        +-----------------------+-------------------+-----------+
+        | Parameter             | Degrees key       | Radians key |
+        +=======================+===================+=============+
+        | Geodetic latitude     | ``latitude_deg``  | ``latitude_rad`` |
+        | Geodetic longitude    | ``longitude_deg`` | ``longitude_rad`` |
+        | x-arm azimuth         | ``xarm_azimuth_deg`` | ``xarm_azimuth_rad`` |
+        | y-arm azimuth         | ``yarm_azimuth_deg`` | ``yarm_azimuth_rad`` |
+        | x-arm tilt (optional) | ``xarm_tilt_deg`` | ``xarm_tilt_rad`` |
+        | y-arm tilt (optional) | ``yarm_tilt_deg`` | ``yarm_tilt_rad`` |
+        +-----------------------+-------------------+-----------+
+
+        ``elevation_m`` is always in metres.  Tilt fields default to ``0.0``
+        when absent.
 
         Args:
             path: Path to a ``.yaml``, ``.yml``, or ``.json`` file.
@@ -195,8 +262,9 @@ class Network:
             user-defined geometries.
 
         Raises:
-            ValueError: If the file extension is unsupported, any required
-                field is missing, or a field value is out of range.
+            ValueError: If the file extension is unsupported, a required
+                angle is absent, both ``*_deg`` and ``*_rad`` are given for
+                the same angle, or a geometry value is out of range.
         """
         path = Path(path)
         data = _load_data(path)
