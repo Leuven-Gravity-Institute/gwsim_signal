@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -160,6 +161,60 @@ class TestCustomDetectorValidation:
             yarm_azimuth_rad=math.pi / 2,
         )
         assert det.name == "ok"
+
+    def test_empty_name_raises_value_error(self) -> None:
+        """Blank or whitespace-only name must raise ValueError."""
+        with pytest.raises(ValueError, match="non-empty"):
+            CustomDetector(
+                name="   ",
+                latitude_rad=0.0,
+                longitude_rad=0.0,
+                elevation_m=0.0,
+                xarm_azimuth_rad=0.0,
+                yarm_azimuth_rad=math.pi / 2,
+            )
+
+    def test_non_finite_xarm_azimuth_raises_value_error(self) -> None:
+        """Non-finite xarm_azimuth_rad must raise ValueError."""
+        with pytest.raises(ValueError, match="xarm_azimuth_rad"):
+            CustomDetector(
+                name="inf_arm",
+                latitude_rad=0.0,
+                longitude_rad=0.0,
+                elevation_m=0.0,
+                xarm_azimuth_rad=math.inf,
+                yarm_azimuth_rad=math.pi / 2,
+            )
+
+    def test_non_finite_yarm_tilt_raises_value_error(self) -> None:
+        """Non-finite yarm_tilt_rad must raise ValueError."""
+        with pytest.raises(ValueError, match="yarm_tilt_rad"):
+            CustomDetector(
+                name="nan_tilt",
+                latitude_rad=0.0,
+                longitude_rad=0.0,
+                elevation_m=0.0,
+                xarm_azimuth_rad=0.0,
+                yarm_azimuth_rad=math.pi / 2,
+                yarm_tilt_rad=math.nan,
+            )
+
+    def test_to_pycbc_raises_runtime_error_when_detector_is_none(self) -> None:
+        """RuntimeError is raised if PyCBC Detector construction returns None."""
+        det = CustomDetector(
+            name="mock_det",
+            latitude_rad=0.0,
+            longitude_rad=0.0,
+            elevation_m=0.0,
+            xarm_azimuth_rad=0.0,
+            yarm_azimuth_rad=math.pi / 2,
+        )
+        with (
+            patch("pycbc.detector.add_detector_on_earth"),
+            patch("pycbc.detector.Detector", return_value=None),
+            pytest.raises(RuntimeError, match="Failed to register"),
+        ):
+            det.to_pycbc()
 
 
 class TestMixedNetworkProjection:

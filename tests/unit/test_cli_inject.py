@@ -154,6 +154,119 @@ def test_inject_cbc_unknown_network(params_file: Path) -> None:
     assert result.exit_code != 0
 
 
+def test_inject_cbc_file_based_network_rejected(params_file: Path, tmp_path: Path) -> None:
+    """Passing an existing file path as --network is rejected with a non-zero exit."""
+    net_file = tmp_path / "network.json"
+    net_file.write_text("{}")
+    result = runner.invoke(
+        app,
+        ["inject", "cbc", "--params", str(params_file), "--network", str(net_file)],
+    )
+    assert result.exit_code != 0
+
+
+def test_inject_cbc_seed_accepted(params_file: Path) -> None:
+    """--seed is accepted and the command completes successfully."""
+    result = runner.invoke(
+        app,
+        [
+            "inject",
+            "cbc",
+            "--params",
+            str(params_file),
+            "--network",
+            "H1L1",
+            "--duration",
+            _DURATION,
+            "--sample-rate",
+            _SAMPLE_RATE,
+            "--f-min",
+            _F_MIN,
+            "--seed",
+            "42",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+
+def test_inject_cbc_invalid_sample_rate(params_file: Path) -> None:
+    """--sample-rate <= 0 must exit non-zero."""
+    result = runner.invoke(
+        app,
+        [
+            "inject",
+            "cbc",
+            "--params",
+            str(params_file),
+            "--network",
+            "H1L1",
+            "--sample-rate",
+            "0",
+        ],
+    )
+    assert result.exit_code != 0
+
+
+def test_inject_cbc_invalid_duration(params_file: Path) -> None:
+    """--duration <= 0 must exit non-zero."""
+    result = runner.invoke(
+        app,
+        [
+            "inject",
+            "cbc",
+            "--params",
+            str(params_file),
+            "--network",
+            "H1L1",
+            "--duration",
+            "0",
+        ],
+    )
+    assert result.exit_code != 0
+
+
+def test_inject_cbc_invalid_f_min(params_file: Path) -> None:
+    """--f-min <= 0 must exit non-zero."""
+    result = runner.invoke(
+        app,
+        [
+            "inject",
+            "cbc",
+            "--params",
+            str(params_file),
+            "--network",
+            "H1L1",
+            "--f-min",
+            "0",
+        ],
+    )
+    assert result.exit_code != 0
+
+
+def test_inject_cbc_missing_tc_key(tmp_path: Path) -> None:
+    """Params file without 'tc' key must exit non-zero."""
+    params = {k: v for k, v in _PARAMS.items() if k != "tc"}
+    p = tmp_path / "params_no_tc.json"
+    p.write_text(json.dumps(params))
+    result = runner.invoke(
+        app,
+        ["inject", "cbc", "--params", str(p), "--network", "H1L1"],
+    )
+    assert result.exit_code != 0
+
+
+def test_inject_cbc_invalid_tc_value(tmp_path: Path) -> None:
+    """Params file with non-numeric 'tc' must exit non-zero."""
+    params = {**_PARAMS, "tc": None}
+    p = tmp_path / "params_bad_tc.json"
+    p.write_text(json.dumps(params))
+    result = runner.invoke(
+        app,
+        ["inject", "cbc", "--params", str(p), "--network", "H1L1"],
+    )
+    assert result.exit_code != 0
+
+
 def test_inject_cbc_help() -> None:
     """`inject cbc --help` displays all expected options."""
     result = runner.invoke(app, ["inject", "cbc", "--help"])

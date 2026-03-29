@@ -16,6 +16,71 @@ def _uniform_series(n: int = 128, fs: float = 4096.0, t0: float = 100.0) -> Time
     return TimeSeries(np.sin(2 * np.pi * 10.0 * t), t0=t0, sample_rate=fs)
 
 
+def test_polarizations_not_a_mapping_raises_type_error() -> None:
+    """Passing a non-mapping raises TypeError."""
+    with pytest.raises(TypeError, match="mapping"):
+        project_polarizations_to_network(
+            [1, 2, 3],  # type: ignore[arg-type]
+            ["H1"],
+            right_ascension=0.0,
+            declination=0.0,
+            polarization_angle=0.0,
+        )
+
+
+def test_polarizations_wrong_series_type_raises_type_error() -> None:
+    """Plus/cross values that are not GWpy TimeSeries raise TypeError."""
+    with pytest.raises(TypeError, match=r"gwpy.timeseries.TimeSeries"):
+        project_polarizations_to_network(
+            {"plus": np.ones(8), "cross": np.zeros(8)},  # type: ignore[arg-type]
+            ["H1"],
+            right_ascension=0.0,
+            declination=0.0,
+            polarization_angle=0.0,
+        )
+
+
+def test_mismatched_sample_rates_raises_value_error() -> None:
+    """Plus and cross with different sample rates raise ValueError."""
+    hp = _uniform_series(fs=4096.0)
+    hc = _uniform_series(fs=2048.0)
+    with pytest.raises(ValueError, match="same sample rate"):
+        project_polarizations_to_network(
+            {"plus": hp, "cross": hc},
+            ["H1"],
+            right_ascension=0.0,
+            declination=0.0,
+            polarization_angle=0.0,
+        )
+
+
+def test_mismatched_time_grids_raises_value_error() -> None:
+    """Plus and cross on different time grids raise ValueError."""
+    hp = _uniform_series(t0=100.0)
+    hc = _uniform_series(t0=200.0)
+    with pytest.raises(ValueError, match="same time samples"):
+        project_polarizations_to_network(
+            {"plus": hp, "cross": hc},
+            ["H1"],
+            right_ascension=0.0,
+            declination=0.0,
+            polarization_angle=0.0,
+        )
+
+
+def test_duplicate_detector_names_raises_value_error() -> None:
+    """Duplicate entries in detector_names raise ValueError."""
+    hp = hc = _uniform_series()
+    with pytest.raises(ValueError, match="duplicates"):
+        project_polarizations_to_network(
+            {"plus": hp, "cross": hc},
+            ["H1", "H1"],
+            right_ascension=0.0,
+            declination=0.0,
+            polarization_angle=0.0,
+        )
+
+
 def test_requires_plus_cross_keys():
     """Polarizations mapping must include plus and cross."""
     hp = _uniform_series()
