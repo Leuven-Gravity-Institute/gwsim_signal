@@ -84,6 +84,9 @@ def main(
 
 def register_commands() -> None:
     """Register CLI commands."""
+    from gwmock_signal.cli.inject import inject_app
+
+    app.add_typer(inject_app, name="inject")
 
 
 register_commands()
