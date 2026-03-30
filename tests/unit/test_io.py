@@ -216,7 +216,7 @@ class TestGWFWrite:
 
     def test_file_exists_and_nonempty(self, tmp_path):
         """Test that the file exists and is non-empty."""
-        _gwf = pytest.importorskip("gwpy.io.gwf")
+        pytest.importorskip("gwpy.io.gwf")
         stack = _make_stack()
         path = tmp_path / "output.gwf"
 
