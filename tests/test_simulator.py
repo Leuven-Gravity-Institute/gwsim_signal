@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from unittest.mock import patch
 
 import numpy as np
@@ -12,6 +13,7 @@ from pycbc.types import TimeSeries as PyCBCTimeSeries
 import gwmock_signal
 from gwmock_signal import CBCSimulator, GWSimulator
 from gwmock_signal.multichannel.stack import DetectorStrainStack
+from gwmock_signal.simulator import TransientSimulator, _json_default
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -139,6 +141,11 @@ class TestCBCSimulatorRequiredParams:
         sim = CBCSimulator(waveform_model="IMRPhenomD")
         for key in ("right_ascension", "declination", "polarization"):
             assert key in sim.required_params, f"Expected '{key}' in required_params"
+
+    def test_waveform_model_property_returns_constructor_value(self):
+        """waveform_model property exposes the model passed at construction."""
+        sim = CBCSimulator(waveform_model="IMRPhenomD")
+        assert sim.waveform_model == "IMRPhenomD"
 
 
 class TestCBCSimulatorMissingParam:
@@ -332,3 +339,103 @@ class TestPublicImport:
     def test_cbc_simulator_importable_from_top_level(self):
         """CBCSimulator is reachable via gwmock_signal.CBCSimulator."""
         assert hasattr(gwmock_signal, "CBCSimulator")
+
+
+class TestJsonDefault:
+    """Unit tests for simulator JSON serialization helper."""
+
+    def test_numpy_scalar_converts_to_python_scalar(self):
+        """NumPy scalars are converted via item()."""
+        value = np.float64(1.25)
+        out = _json_default(value)
+        assert isinstance(out, float)
+        assert out == pytest.approx(1.25)
+
+    def test_object_with_tolist_converts_to_list(self):
+        """Objects with tolist() (and no item()) are converted via tolist()."""
+
+        class _ArrayLike:
+            def tolist(self):
+                return [1.0, 2.0, 3.0]
+
+        out = _json_default(_ArrayLike())
+        assert out == [1.0, 2.0, 3.0]
+
+    def test_unsupported_type_raises_type_error(self):
+        """Non-NumPy objects without item()/tolist() raise TypeError."""
+        with pytest.raises(TypeError, match="not JSON serializable"):
+            _json_default({"not": "serializable by helper"})
+
+
+class TestTransientProjectionValidation:
+    """Tests for projection-key validation in TransientSimulator.simulate."""
+
+    def test_missing_projection_keys_raise_value_error(self):
+        """Non-CBC transient subclasses still require sky-position projection keys."""
+
+        class _TransientStub(TransientSimulator):
+            @property
+            def required_params(self) -> frozenset[str]:
+                # Intentionally exclude projection keys to exercise the guard.
+                return frozenset({"tc"})
+
+            def generate_polarizations(
+                self, params: dict, sampling_frequency: float, minimum_frequency: float
+            ) -> tuple[TimeSeries, TimeSeries]:
+                n = 8
+                return (
+                    TimeSeries(np.zeros(n), t0=float(params["tc"]), sample_rate=sampling_frequency),
+                    TimeSeries(np.zeros(n), t0=float(params["tc"]), sample_rate=sampling_frequency),
+                )
+
+        sim = _TransientStub()
+        params = {"tc": 100.0}  # right_ascension/declination/polarization absent
+        background = {"H1": _zeros(n=8, fs=8.0, t0=100.0)}
+        with pytest.raises(ValueError, match="right_ascension"):
+            sim.simulate(
+                params,
+                ["H1"],
+                background,
+                sampling_frequency=8.0,
+                minimum_frequency=20.0,
+            )
+
+
+class TestCBCSimulatorWrite:
+    """Tests for CBCSimulator.write side effects and return value."""
+
+    def test_write_saves_stack_and_json_sidecar(self, tmp_path):
+        """write() calls simulate, writes output, and stores params JSON."""
+        fs = 256.0
+        n = 64
+        t0 = _MINIMAL_PARAMS["tc"]
+        params = {
+            **_MINIMAL_PARAMS,
+            "distance": np.float64(_MINIMAL_PARAMS["distance"]),
+        }
+        detector_names = ["H1", "L1"]
+        background = {name: TimeSeries(np.zeros(n), t0=t0, sample_rate=fs) for name in detector_names}
+
+        out_path = tmp_path / "simulated.hdf5"
+        expected = DetectorStrainStack.from_mapping(detector_names, background)
+
+        sim = CBCSimulator(waveform_model="IMRPhenomD")
+        with patch.object(sim, "simulate", return_value=expected) as mock_simulate:
+            result = sim.write(
+                out_path,
+                params,
+                detector_names,
+                background,
+                sampling_frequency=fs,
+                minimum_frequency=20.0,
+                format="hdf5",
+            )
+
+        mock_simulate.assert_called_once()
+        assert result is expected
+        assert out_path.exists()
+
+        params_sidecar = tmp_path / "simulated_params.json"
+        assert params_sidecar.exists()
+        saved = json.loads(params_sidecar.read_text())
+        assert saved["distance"] == pytest.approx(_MINIMAL_PARAMS["distance"])
