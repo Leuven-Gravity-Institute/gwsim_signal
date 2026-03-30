@@ -20,6 +20,15 @@ from gwmock_signal.waveform import WaveformFactory
 logger = logging.getLogger("gwmock_signal.simulator")
 
 
+def _json_default(obj: Any) -> Any:
+    """Convert NumPy types to Python natives for JSON serialization."""
+    if hasattr(obj, "item"):  # NumPy scalar
+        return obj.item()
+    if hasattr(obj, "tolist"):  # NumPy array
+        return obj.tolist()
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+
 class GWSimulator(ABC):
     """Abstract base class for gravitational-wave signal simulators.
 
@@ -287,6 +296,6 @@ class CBCSimulator(TransientSimulator):
         result.write(path, format=format)
 
         params_path = Path(path).with_name(Path(path).stem + "_params.json")
-        params_path.write_text(json.dumps(params))
+        params_path.write_text(json.dumps(params, default=_json_default, indent=4))
 
         return result
