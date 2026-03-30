@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import h5py
 import numpy as np
 import pytest
 from gwpy.timeseries import TimeSeries
@@ -88,6 +89,59 @@ class TestHDF5RoundTrip:
         assert path.exists()
         assert path.stat().st_size > 0
 
+    def test_hdf5_order_attribute_is_used(self, tmp_path):
+        """If the top-level order attribute disagrees with file key order, reconstruction follows the attribute."""
+        path = tmp_path / "order_test.h5"
+
+        t0 = _T0
+        dt = _DT
+        a = np.array([1.0, 2.0, 3.0], dtype=float)
+        b = np.array([4.0, 5.0, 6.0], dtype=float)
+
+        with h5py.File(path, "w") as fh:
+            # Create datasets in reverse order on purpose.
+            ds_b = fh.create_dataset("B", data=b)
+            ds_b.attrs["t0"] = float(t0)
+            ds_b.attrs["dt"] = float(dt)
+            ds_b.attrs["unit"] = "strain"
+
+            ds_a = fh.create_dataset("A", data=a)
+            ds_a.attrs["t0"] = float(t0)
+            ds_a.attrs["dt"] = float(dt)
+            ds_a.attrs["unit"] = "strain"
+
+            # Force the desired reconstruction order.
+            fh.attrs["gwmock_signal_detector_strain_stack_order"] = '["A", "B"]'
+
+        restored = DetectorStrainStack.read(path, format="hdf5")
+        assert restored.detector_names == ("A", "B")
+        np.testing.assert_array_equal(restored["A"].value, a)
+        np.testing.assert_array_equal(restored["B"].value, b)
+
+    def test_hdf5_missing_order_attribute_falls_back_to_keys(self, tmp_path):
+        """Files written by older versions without the order attribute should still be readable."""
+        path = tmp_path / "order_missing_attr.h5"
+
+        t0 = _T0
+        dt = _DT
+        a = np.array([1.0, 2.0, 3.0], dtype=float)
+        b = np.array([4.0, 5.0, 6.0], dtype=float)
+
+        with h5py.File(path, "w") as fh:
+            ds_b = fh.create_dataset("B", data=b)
+            ds_b.attrs["t0"] = float(t0)
+            ds_b.attrs["dt"] = float(dt)
+            ds_b.attrs["unit"] = "strain"
+
+            ds_a = fh.create_dataset("A", data=a)
+            ds_a.attrs["t0"] = float(t0)
+            ds_a.attrs["dt"] = float(dt)
+            ds_a.attrs["unit"] = "strain"
+            expected = list(fh.keys())
+
+        restored = DetectorStrainStack.read(path, format="hdf5")
+        assert list(restored.detector_names) == expected
+
 
 # ---------------------------------------------------------------------------
 # npy round-trip
@@ -162,7 +216,7 @@ class TestGWFWrite:
 
     def test_file_exists_and_nonempty(self, tmp_path):
         """Test that the file exists and is non-empty."""
-        gwf = pytest.importorskip("gwpy.io.gwf")  # noqa: F841
+        _gwf = pytest.importorskip("gwpy.io.gwf")
         stack = _make_stack()
         path = tmp_path / "output.gwf"
 
@@ -224,12 +278,12 @@ class TestReadErrors:
     def test_read_gwf_raises_not_implemented(self, tmp_path):
         """Reading a GWF file raises NotImplementedError."""
         with pytest.raises(NotImplementedError):
-            DetectorStrainStack.read(tmp_path / "x.gwf", format="gwf")
+            DetectorStrainStack.read(tmp_path / "x.gwf", format="gwf")  # type: ignore[arg-type]
 
     def test_read_txt_raises_not_implemented(self, tmp_path):
         """Reading a TXT file raises NotImplementedError."""
         with pytest.raises(NotImplementedError):
-            DetectorStrainStack.read(tmp_path / "x.txt", format="txt")
+            DetectorStrainStack.read(tmp_path / "x.txt", format="txt")  # type: ignore[arg-type]
 
     def test_write_unknown_format_raises(self, tmp_path):
         """Writing an unknown format raises ValueError."""

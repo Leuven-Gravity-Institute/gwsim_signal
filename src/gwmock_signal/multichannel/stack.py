@@ -12,6 +12,12 @@ import numpy as np
 from astropy.units.quantity import Quantity
 from gwpy.timeseries import TimeSeries, TimeSeriesDict
 
+# Top-level HDF5 attribute storing the detector/channel name order.
+#
+# We serialize as a JSON list string to keep compatibility with simple
+# h5py attribute types and avoid separate datasets.
+_HDF5_STACK_ORDER_ATTR = "gwmock_signal_detector_strain_stack_order"
+
 
 def _validate_aligned_channels(channels: Sequence[TimeSeries]) -> None:
     """Require identical length, sample rate, and time samples across channels."""
@@ -203,6 +209,9 @@ class DetectorStrainStack:
 
         elif format == "hdf5":
             with h5py.File(path, "w") as fh:
+                # Preserve the detector/channel ordering explicitly since HDF5
+                # group key iteration order is not guaranteed across environments.
+                fh.attrs[_HDF5_STACK_ORDER_ATTR] = json.dumps(channel_names)
                 for name, ts in zip(self._names, self._channels, strict=True):
                     ds = fh.create_dataset(name, data=np.asarray(ts.value, dtype=np.float64))
                     ds.attrs["t0"] = t0_val
@@ -252,14 +261,33 @@ class DetectorStrainStack:
         if format == "hdf5":
             with h5py.File(path, "r") as fh:
                 names = list(fh.keys())
+                ordered_names = names
+
+                order_raw = fh.attrs.get(_HDF5_STACK_ORDER_ATTR)
+                if order_raw is not None:
+                    if isinstance(order_raw, bytes):
+                        order_raw = order_raw.decode("utf-8")
+                    try:
+                        candidate = json.loads(order_raw)
+                    except (TypeError, ValueError):
+                        candidate = None
+
+                    if (
+                        isinstance(candidate, list)
+                        and all(isinstance(n, str) for n in candidate)
+                        and len(set(candidate)) == len(candidate)
+                        and set(candidate) == set(names)
+                    ):
+                        ordered_names = candidate
+
                 channels = []
-                for name in names:
+                for name in ordered_names:
                     ds = fh[name]
                     data = ds[...]
                     t0 = float(ds.attrs["t0"])
                     dt = float(ds.attrs["dt"])
                     channels.append(TimeSeries(data, t0=t0, dt=dt, unit="strain", name=name))
-            return cls(tuple(names), tuple(channels))
+            return cls(tuple(ordered_names), tuple(channels))
 
         if format == "npy":
             arr = np.load(path)
