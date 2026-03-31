@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
-from typing import Any
+from pathlib import Path
+from typing import Any, Literal
 
 from gwpy.timeseries import TimeSeries
 
@@ -16,6 +18,15 @@ from gwmock_signal.projection.network import project_polarizations_to_network
 from gwmock_signal.waveform import WaveformFactory
 
 logger = logging.getLogger("gwmock_signal.simulator")
+
+
+def _json_default(obj: Any) -> Any:
+    """Convert NumPy types to Python natives for JSON serialization."""
+    if hasattr(obj, "tolist"):  # NumPy array
+        return obj.tolist()
+    if hasattr(obj, "item"):  # NumPy scalar
+        return obj.item()
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
 class GWSimulator(ABC):
@@ -238,3 +249,53 @@ class CBCSimulator(TransientSimulator):
             minimum_frequency=minimum_frequency,
         )
         return result["plus"], result["cross"]
+
+    def write(  # noqa: PLR0913
+        self,
+        path: str | Path,
+        params: dict[str, Any],
+        detector_names: Sequence[str | CustomDetector],
+        background: Mapping[str, TimeSeries],
+        *,
+        sampling_frequency: float,
+        minimum_frequency: float,
+        format: Literal["gwf", "hdf5", "npy", "txt"] = "hdf5",  # noqa: A002
+        earth_rotation: bool = True,
+        interpolate_if_offset: bool = True,
+    ) -> DetectorStrainStack:
+        """Simulate a CBC injection, write the result, and save the parameter dict.
+
+        Calls :meth:`simulate`, writes the returned ``DetectorStrainStack`` to
+        *path* via :meth:`DetectorStrainStack.write`, and saves *params* as a
+        JSON sidecar at ``<stem>_params.json`` next to *path*.
+
+        Args:
+            path: Output file path.
+            params: CBC source parameters (same as :meth:`simulate`).
+            detector_names: IFO codes for the target network.
+            background: Mapping of detector name to background ``TimeSeries``.
+            sampling_frequency: Sample rate in Hz.
+            minimum_frequency: Low-frequency cutoff in Hz.
+            format: Output format for the strain data — one of ``'gwf'``,
+                ``'hdf5'``, ``'npy'``, or ``'txt'``.  Defaults to ``'hdf5'``.
+            earth_rotation: Passed through to :meth:`simulate`.
+            interpolate_if_offset: Passed through to :meth:`simulate`.
+
+        Returns:
+            The ``DetectorStrainStack`` that was written to disk.
+        """
+        result = self.simulate(
+            params,
+            detector_names,
+            background,
+            sampling_frequency=sampling_frequency,
+            minimum_frequency=minimum_frequency,
+            earth_rotation=earth_rotation,
+            interpolate_if_offset=interpolate_if_offset,
+        )
+        result.write(path, format=format)
+
+        params_path = Path(path).with_name(Path(path).stem + "_params.json")
+        params_path.write_text(json.dumps(params, default=_json_default, indent=4))
+
+        return result
