@@ -77,7 +77,7 @@ class TestHDF5RoundTrip:
         stack.write(path, format="hdf5")
         restored = DetectorStrainStack.read(path, format="hdf5")
 
-        assert set(restored.detector_names) == {"H1", "L1"}
+        assert restored.detector_names == ("H1", "L1")
 
     def test_file_is_created(self, tmp_path):
         """Test that the file is created."""

@@ -22,10 +22,10 @@ logger = logging.getLogger("gwmock_signal.simulator")
 
 def _json_default(obj: Any) -> Any:
     """Convert NumPy types to Python natives for JSON serialization."""
-    if hasattr(obj, "item"):  # NumPy scalar
-        return obj.item()
     if hasattr(obj, "tolist"):  # NumPy array
         return obj.tolist()
+    if hasattr(obj, "item"):  # NumPy scalar
+        return obj.item()
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
