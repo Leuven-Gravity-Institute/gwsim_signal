@@ -634,8 +634,8 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.8" },
     { name = "ruff", marker = "extra == 'test'", specifier = ">=0.15.8" },
     { name = "typer", specifier = ">=0.24.1" },
-    { name = "zensical", marker = "extra == 'dev'", specifier = ">=0.0.29" },
-    { name = "zensical", marker = "extra == 'docs'", specifier = ">=0.0.29" },
+    { name = "zensical", marker = "extra == 'dev'", specifier = ">=0.0.30" },
+    { name = "zensical", marker = "extra == 'docs'", specifier = ">=0.0.30" },
 ]
 provides-extras = ["build", "ci", "dev", "docs", "release", "test"]
 
