@@ -351,14 +351,9 @@ class TestJsonDefault:
         assert isinstance(out, float)
         assert out == pytest.approx(1.25)
 
-    def test_object_with_tolist_converts_to_list(self):
-        """Objects with tolist() (and no item()) are converted via tolist()."""
-
-        class _ArrayLike:
-            def tolist(self):
-                return [1.0, 2.0, 3.0]
-
-        out = _json_default(_ArrayLike())
+    def test_numpy_array_converts_to_list(self):
+        """NumPy arrays are converted via tolist()."""
+        out = _json_default(np.array([1.0, 2.0, 3.0]))
         assert out == [1.0, 2.0, 3.0]
 
     def test_unsupported_type_raises_type_error(self):
