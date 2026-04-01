@@ -253,7 +253,7 @@ class CBCSimulator(TransientSimulator):
         Remaps gwmock-pop canonical parameter names to PyCBC shortnames via
         ``_CANONICAL_TO_PYCBC`` before forwarding to the waveform generator.
         Projection-specific keys (``right_ascension``, ``declination``,
-        ``polarization``) are excluded — they are consumed by
+        ``polarization_angle``) are excluded — they are consumed by
         ``TransientSimulator.simulate``.
 
         Args:
