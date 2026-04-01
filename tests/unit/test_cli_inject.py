@@ -21,15 +21,15 @@ runner = CliRunner()
 # ---------------------------------------------------------------------------
 
 _PARAMS: dict = {
-    "mass1": 10.0,
-    "mass2": 10.0,
-    "spin1z": 0.0,
-    "spin2z": 0.0,
-    "tc": 1126259462.4,
+    "detector_frame_mass_1": 10.0,
+    "detector_frame_mass_2": 10.0,
+    "spin_1z": 0.0,
+    "spin_2z": 0.0,
+    "coa_time": 1126259462.4,
     "distance": 410.0,
     "right_ascension": 1.375,
     "declination": -1.211,
-    "polarization": 2.659,
+    "polarization_angle": 2.659,
     "inclination": 2.5,
     "coa_phase": 0.0,
 }
@@ -296,8 +296,8 @@ def test_inject_cbc_invalid_f_min(params_file: Path) -> None:
 
 
 def test_inject_cbc_missing_tc_key(tmp_path: Path) -> None:
-    """Params file without 'tc' key must exit non-zero."""
-    params = {k: v for k, v in _PARAMS.items() if k != "tc"}
+    """Params file without 'coa_time' key must exit non-zero."""
+    params = {k: v for k, v in _PARAMS.items() if k != "coa_time"}
     p = tmp_path / "params_no_tc.json"
     p.write_text(json.dumps(params))
     result = runner.invoke(
@@ -308,8 +308,8 @@ def test_inject_cbc_missing_tc_key(tmp_path: Path) -> None:
 
 
 def test_inject_cbc_invalid_tc_value(tmp_path: Path) -> None:
-    """Params file with non-numeric 'tc' must exit non-zero."""
-    params = {**_PARAMS, "tc": None}
+    """Params file with non-numeric 'coa_time' must exit non-zero."""
+    params = {**_PARAMS, "coa_time": None}
     p = tmp_path / "params_bad_tc.json"
     p.write_text(json.dumps(params))
     result = runner.invoke(

@@ -115,13 +115,13 @@ def cbc(  # noqa: PLR0912, PLR0913
     if f_min <= 0:
         raise typer.BadParameter("--f-min must be > 0", param_hint="--f-min")
 
-    # Build zero-noise background centred on tc
+    # Build zero-noise background centred on coa_time
     try:
-        tc = float(cbc_params["tc"])
+        tc = float(cbc_params["coa_time"])
     except KeyError:
-        raise typer.BadParameter("Missing required parameter: 'tc'", param_hint="--params") from None
+        raise typer.BadParameter("Missing required parameter: 'coa_time'", param_hint="--params") from None
     except (TypeError, ValueError):
-        raise typer.BadParameter("Parameter 'tc' must be a number", param_hint="--params") from None
+        raise typer.BadParameter("Parameter 'coa_time' must be a number", param_hint="--params") from None
     # Normalise to plain string names for background dict keys and output labels.
     det_str_names = [d.name if isinstance(d, CustomDetector) else d for d in net.detector_names]
 

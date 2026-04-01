@@ -35,9 +35,9 @@ def inject_cbc_signal(  # noqa: PLR0913
 
     Args:
         waveform_model: PyCBC time-domain approximant name (e.g. ``'IMRPhenomD'``).
-        params: CBC injection parameters; must include ``mass1``, ``mass2``,
-            ``tc``, ``distance``, ``inclination``, ``right_ascension``,
-            ``declination``, and ``polarization``.
+        params: CBC injection parameters; must include ``detector_frame_mass_1``,
+            ``detector_frame_mass_2``, ``coa_time``, ``distance``, ``inclination``,
+            ``right_ascension``, ``declination``, and ``polarization_angle``.
         detector_names: IFO codes for the target network
             (e.g. ``['H1', 'L1', 'V1']``).
         background: Mapping of detector name to background ``TimeSeries``
