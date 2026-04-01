@@ -265,6 +265,15 @@ class CBCSimulator(TransientSimulator):
         Returns:
             Tuple of ``(hp, hc)`` GWpy ``TimeSeries`` objects.
         """
+        alias_conflicts = {
+            canonical: legacy
+            for canonical, legacy in self._CANONICAL_TO_PYCBC.items()
+            if canonical in params and legacy in params
+        }
+        if alias_conflicts:
+            pairs = ", ".join(f"{canonical}/{legacy}" for canonical, legacy in sorted(alias_conflicts.items()))
+            raise ValueError(f"Do not mix canonical and PyCBC aliases in params: {pairs}")
+
         # Remap canonical → PyCBC names transparently before any PyCBC call.
         remapped = {self._CANONICAL_TO_PYCBC.get(k, k): v for k, v in params.items()}
         waveform_params = {
