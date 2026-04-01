@@ -25,14 +25,14 @@ def _zeros(n: int = 128, fs: float = 4096.0, t0: float = 1_000_000.0) -> TimeSer
 
 
 _MINIMAL_PARAMS: dict = {
-    "mass1": 36.0,
-    "mass2": 29.0,
-    "tc": 1_126_259_462.4,
+    "detector_frame_mass_1": 36.0,
+    "detector_frame_mass_2": 29.0,
+    "coa_time": 1_126_259_462.4,
     "distance": 410.0,
     "inclination": 0.0,
     "right_ascension": 1.375,
     "declination": -1.211,
-    "polarization": 0.0,
+    "polarization_angle": 0.0,
 }
 
 
@@ -103,9 +103,9 @@ class TestValidateParams:
 
     def test_missing_single_key_raises_value_error(self):
         """Single missing key names that key in the error."""
-        sim = self._make_concrete(frozenset({"mass1", "mass2"}))
-        with pytest.raises(ValueError, match="mass2"):
-            sim._validate_params({"mass1": 10.0})
+        sim = self._make_concrete(frozenset({"detector_frame_mass_1", "detector_frame_mass_2"}))
+        with pytest.raises(ValueError, match="detector_frame_mass_2"):
+            sim._validate_params({"detector_frame_mass_1": 10.0})
 
     def test_missing_multiple_keys_names_all(self):
         """All missing keys appear in the error message."""
@@ -133,13 +133,13 @@ class TestCBCSimulatorRequiredParams:
     def test_required_params_includes_cbc_keys(self):
         """CBC waveform keys are in required_params."""
         sim = CBCSimulator(waveform_model="IMRPhenomD")
-        for key in ("mass1", "mass2", "tc", "distance", "inclination"):
+        for key in ("detector_frame_mass_1", "detector_frame_mass_2", "coa_time", "distance", "inclination"):
             assert key in sim.required_params, f"Expected '{key}' in required_params"
 
     def test_required_params_includes_projection_keys(self):
         """Projection sky-position keys are in required_params."""
         sim = CBCSimulator(waveform_model="IMRPhenomD")
-        for key in ("right_ascension", "declination", "polarization"):
+        for key in ("right_ascension", "declination", "polarization_angle"):
             assert key in sim.required_params, f"Expected '{key}' in required_params"
 
     def test_waveform_model_property_returns_constructor_value(self):
@@ -152,10 +152,10 @@ class TestCBCSimulatorMissingParam:
     """Tests that missing required params raise ValueError with the key named."""
 
     def test_missing_mass1_raises_value_error_naming_key(self):
-        """Missing mass1 raises ValueError that names 'mass1'."""
+        """Missing detector_frame_mass_1 raises ValueError that names the key."""
         sim = CBCSimulator(waveform_model="IMRPhenomD")
-        incomplete = {k: v for k, v in _MINIMAL_PARAMS.items() if k != "mass1"}
-        with pytest.raises(ValueError, match="mass1"):
+        incomplete = {k: v for k, v in _MINIMAL_PARAMS.items() if k != "detector_frame_mass_1"}
+        with pytest.raises(ValueError, match="detector_frame_mass_1"):
             sim._validate_params(incomplete)
 
 
@@ -174,7 +174,7 @@ class TestCBCSimulatorSimulate:
         """Simulate returns a DetectorStrainStack with the requested detector order."""
         fs = 4096.0
         n = 128
-        t0 = _MINIMAL_PARAMS["tc"]
+        t0 = _MINIMAL_PARAMS["coa_time"]
 
         hp = TimeSeries(np.ones(n), t0=t0, sample_rate=fs)
         hc = TimeSeries(np.zeros(n), t0=t0, sample_rate=fs)
@@ -212,7 +212,7 @@ class TestCBCSimulatorSimulate:
         """Verify _validate_params → generate_polarizations → project → inject order."""
         fs = 4096.0
         n = 64
-        t0 = _MINIMAL_PARAMS["tc"]
+        t0 = _MINIMAL_PARAMS["coa_time"]
 
         hp = TimeSeries(np.ones(n), t0=t0, sample_rate=fs)
         hc = TimeSeries(np.zeros(n), t0=t0, sample_rate=fs)
@@ -253,9 +253,9 @@ class TestCBCSimulatorSimulate:
     @patch("gwmock_signal.simulator.WaveformFactory")
     def test_simulate_missing_param_raises_before_waveform(self, mock_factory_cls):
         """Missing required parameter raises ValueError before any waveform call."""
-        incomplete = {k: v for k, v in _MINIMAL_PARAMS.items() if k != "tc"}
+        incomplete = {k: v for k, v in _MINIMAL_PARAMS.items() if k != "coa_time"}
         sim = CBCSimulator(waveform_model="IMRPhenomD")
-        with pytest.raises(ValueError, match="tc"):
+        with pytest.raises(ValueError, match="coa_time"):
             sim.simulate(
                 incomplete,
                 ["H1"],
@@ -285,7 +285,7 @@ class TestCBCSimulatorEndToEnd:
         response at the GW150914 sky position produces a non-zero projected strain,
         confirming that the projection/injection path actually modifies the data.
         """
-        tc = _MINIMAL_PARAMS["tc"]
+        tc = _MINIMAL_PARAMS["coa_time"]
         fs = 4096.0
         n = 256
 
@@ -384,7 +384,7 @@ class TestTransientProjectionValidation:
                 )
 
         sim = _TransientStub()
-        params = {"tc": 100.0}  # right_ascension/declination/polarization absent
+        params = {"tc": 100.0}  # right_ascension/declination/polarization_angle absent
         background = {"H1": _zeros(n=8, fs=8.0, t0=100.0)}
         with pytest.raises(ValueError, match="right_ascension"):
             sim.simulate(
@@ -403,7 +403,7 @@ class TestCBCSimulatorWrite:
         """write() calls simulate, writes output, and stores params JSON."""
         fs = 256.0
         n = 64
-        t0 = _MINIMAL_PARAMS["tc"]
+        t0 = _MINIMAL_PARAMS["coa_time"]
         params = {
             **_MINIMAL_PARAMS,
             "distance": np.float64(_MINIMAL_PARAMS["distance"]),

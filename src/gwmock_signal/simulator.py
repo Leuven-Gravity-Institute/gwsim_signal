@@ -7,7 +7,7 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from gwpy.timeseries import TimeSeries
 
@@ -127,7 +127,7 @@ class TransientSimulator(GWSimulator):
 
         Args:
             params: Source parameters; must contain all ``required_params`` keys
-                plus ``right_ascension``, ``declination``, and ``polarization``
+                plus ``right_ascension``, ``declination``, and ``polarization_angle``
                 for antenna-response projection.
             detector_names: IFO codes (e.g. ``'H1'``, ``'L1'``, ``'V1'``).
             background: Mapping of detector name to background
@@ -148,7 +148,7 @@ class TransientSimulator(GWSimulator):
 
         # Validate projection keys before direct params[...] access.
         # _validate_params only checks subclass-defined required_params. Non-CBC subclasses can pass validation and then fail mid-pipeline with KeyError.
-        projection_keys = {"right_ascension", "declination", "polarization"}
+        projection_keys = {"right_ascension", "declination", "polarization_angle"}
         missing_projection = projection_keys - set(params)
         if missing_projection:
             raise ValueError(f"Missing required parameters: {sorted(missing_projection)}")
@@ -162,7 +162,7 @@ class TransientSimulator(GWSimulator):
             detector_names,
             right_ascension=params["right_ascension"],
             declination=params["declination"],
-            polarization_angle=params["polarization"],
+            polarization_angle=params["polarization_angle"],
             earth_rotation=earth_rotation,
         )
         injected = {
@@ -184,24 +184,44 @@ class CBCSimulator(TransientSimulator):
     strain. ``waveform_model`` is a CBC concern and is supplied at construction
     time, keeping the base-class ``simulate`` interface source-agnostic.
 
+    The public interface accepts **gwmock-pop canonical parameter names**
+    (e.g. ``detector_frame_mass_1``, ``coa_time``, ``polarization_angle``).
+    Translation to PyCBC shortnames is handled internally via
+    ``_CANONICAL_TO_PYCBC`` and is invisible to callers.
+
     Args:
         waveform_model: PyCBC time-domain approximant name or any model
             registered with ``WaveformFactory`` (e.g. ``'IMRPhenomD'``).
     """
 
-    #: Minimum parameter keys required by the CBC pipeline.
+    #: Minimum parameter keys required by the CBC pipeline (gwmock-pop canonical names).
     _REQUIRED: frozenset[str] = frozenset(
         {
-            "mass1",
-            "mass2",
-            "tc",
+            "detector_frame_mass_1",
+            "detector_frame_mass_2",
+            "coa_time",
             "distance",
             "inclination",
             "right_ascension",
             "declination",
-            "polarization",
+            "polarization_angle",
         }
     )
+
+    #: Mapping from gwmock-pop canonical names to PyCBC shortnames.
+    #: Applied internally before every PyCBC call; never visible to callers.
+    _CANONICAL_TO_PYCBC: ClassVar[dict[str, str]] = {
+        "detector_frame_mass_1": "mass1",
+        "detector_frame_mass_2": "mass2",
+        "spin_1x": "spin1x",
+        "spin_1y": "spin1y",
+        "spin_1z": "spin1z",
+        "spin_2x": "spin2x",
+        "spin_2y": "spin2y",
+        "spin_2z": "spin2z",
+        "coa_time": "tc",
+        "polarization_angle": "polarization",
+    }
 
     def __init__(self, waveform_model: str) -> None:
         """Initialise with the waveform model name.
@@ -230,16 +250,34 @@ class CBCSimulator(TransientSimulator):
     ) -> tuple[TimeSeries, TimeSeries]:
         """Delegate waveform generation to ``WaveformFactory``.
 
+        Remaps gwmock-pop canonical parameter names to PyCBC shortnames via
+        ``_CANONICAL_TO_PYCBC`` before forwarding to the waveform generator.
+        Projection-specific keys (``right_ascension``, ``declination``,
+        ``polarization_angle``) are excluded — they are consumed by
+        ``TransientSimulator.simulate``.
+
         Args:
-            params: CBC source parameters (masses, spins, distance, etc.).
+            params: CBC source parameters using gwmock-pop canonical names
+                (e.g. ``detector_frame_mass_1``, ``coa_time``).
             sampling_frequency: Sample rate in Hz.
             minimum_frequency: Low-frequency cutoff in Hz.
 
         Returns:
             Tuple of ``(hp, hc)`` GWpy ``TimeSeries`` objects.
         """
+        alias_conflicts = {
+            canonical: legacy
+            for canonical, legacy in self._CANONICAL_TO_PYCBC.items()
+            if canonical in params and legacy in params
+        }
+        if alias_conflicts:
+            pairs = ", ".join(f"{canonical}/{legacy}" for canonical, legacy in sorted(alias_conflicts.items()))
+            raise ValueError(f"Do not mix canonical and PyCBC aliases in params: {pairs}")
+
+        # Remap canonical → PyCBC names transparently before any PyCBC call.
+        remapped = {self._CANONICAL_TO_PYCBC.get(k, k): v for k, v in params.items()}
         waveform_params = {
-            k: v for k, v in params.items() if k not in {"right_ascension", "declination", "polarization"}
+            k: v for k, v in remapped.items() if k not in {"right_ascension", "declination", "polarization"}
         }
 
         result = WaveformFactory().generate(

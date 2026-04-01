@@ -27,22 +27,22 @@ DURATION = 8.0  # seconds
 POST_MERGER_PADDING = 0.05  # 50 ms — accommodates time_delay_from_earth_center offsets
 
 PARAMS: dict = {
-    "mass1": 36.0,
-    "mass2": 29.0,
-    "spin1z": 0.0,
-    "spin2z": 0.0,
+    "detector_frame_mass_1": 36.0,
+    "detector_frame_mass_2": 29.0,
+    "spin_1z": 0.0,
+    "spin_2z": 0.0,
     "distance": 410.0,
     "right_ascension": 1.375,
     "declination": -1.211,
-    "polarization": 2.659,
+    "polarization_angle": 2.659,
     "inclination": 2.5,
     "coa_phase": 0.0,
-    "tc": 1126259462.4,
+    "coa_time": 1126259462.4,
 }
 
 RA = PARAMS["right_ascension"]
 DEC = PARAMS["declination"]
-TC = PARAMS["tc"]
+TC = PARAMS["coa_time"]
 
 # Reference matched-filter SNR for the H1 channel against the aLIGO design
 # sensitivity PSD (aLIGODesignSensitivityP1200087).
