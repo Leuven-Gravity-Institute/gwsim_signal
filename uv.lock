@@ -617,7 +617,7 @@ requires-dist = [
     { name = "hatch", marker = "extra == 'build'", specifier = ">=1.16.5" },
     { name = "mkdocstrings-python", marker = "extra == 'dev'", specifier = ">=2.0.3" },
     { name = "mkdocstrings-python", marker = "extra == 'docs'", specifier = ">=2.0.3" },
-    { name = "numpy", specifier = ">=2.4.3" },
+    { name = "numpy", specifier = ">=2.4.4" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
     { name = "pre-commit", marker = "extra == 'test'", specifier = ">=4.5.1" },
     { name = "pycbc", specifier = ">=2.10.0" },
