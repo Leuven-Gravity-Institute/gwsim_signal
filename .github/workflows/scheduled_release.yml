@@ -26,12 +26,12 @@ jobs:
 
     ci:
         needs: check_new_commits
-        if: ${{ needs.check_new_commits.outputs.has-changes }}
+        if: ${{ needs.check_new_commits.outputs.has-changes == 'true' }}
         uses: ./.github/workflows/ci.yml
 
     codeql:
         needs: check_new_commits
-        if: ${{ needs.check_new_commits.outputs.has-changes }}
+        if: ${{ needs.check_new_commits.outputs.has-changes == 'true'}}
         uses: ./.github/workflows/codeql.yml
         permissions:
             security-events: write
