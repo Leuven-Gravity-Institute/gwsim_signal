@@ -1,4 +1,16 @@
-# ruff: noqa PL0415
+#
+# Copyright (C) 2026 Leuven Gravity Institute
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
 """Main entry point for the gwmock_signal CLI application."""
 
 from __future__ import annotations
@@ -9,7 +21,7 @@ from typing import Annotated
 import typer
 
 
-class LoggingLevel(str, enum.Enum):
+class LoggingLevel(enum.StrEnum):
     """Logging levels for the CLI."""
 
     NOTSET = "NOTSET"
@@ -34,10 +46,10 @@ def setup_logging(level: LoggingLevel = LoggingLevel.INFO) -> None:
     Args:
         level: Logging level.
     """
-    import logging
+    import logging  # noqa: PLC0415
 
-    from rich.console import Console
-    from rich.logging import RichHandler
+    from rich.console import Console  # noqa: PLC0415
+    from rich.logging import RichHandler  # noqa: PLC0415
 
     logger = logging.getLogger("gwmock_signal")
 
@@ -84,7 +96,7 @@ def main(
 
 def register_commands() -> None:
     """Register CLI commands."""
-    from gwmock_signal.cli.inject import inject_app
+    from gwmock_signal.cli.inject import inject_app  # noqa: PLC0415
 
     app.add_typer(inject_app, name="inject")
 
