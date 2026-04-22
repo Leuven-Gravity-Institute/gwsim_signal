@@ -53,7 +53,7 @@ jobs:
                   enable-cache: 'true'
 
             - name: Install dependencies
-              run: uv sync --extra release --frozen
+              run: uv sync --group release --frozen
 
             - name: Bump version and push tag
               id: tag_version

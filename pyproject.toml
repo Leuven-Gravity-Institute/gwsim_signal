@@ -19,14 +19,13 @@ requires-python = ">=3.12,<3.14"
 dynamic = ["version"]
 dependencies = [
   "typer>=0.24.1",
-  "numpy>=2.4.4",
   "gwpy>=4.0.1",
   "pycbc>=2.10.0",
   "pyyaml>=6.0.3",
 ]
 
-[project.optional-dependencies]
-test = [
+[dependency-groups]
+dev = [
   "bandit[toml]>=1.9.4",
   "ruff>=0.15.11",
   "pre-commit>=4.5.1",
@@ -34,9 +33,8 @@ test = [
   "pytest-mock>=3.15.1",
   "pytest-runner>=6.0.1",
   "pytest>=9.0.3",
+  "pytest-github-actions-annotate-failures>=0.4.0",
 ]
-ci = ["pytest-github-actions-annotate-failures>=0.4.0"]
-dev = ["gwmock-signal[test,docs]"]
 docs = ["zensical>=0.0.33", "mkdocstrings-python>=2.0.3"]
 build = ["hatch>=1.16.5"]
 release = ["git-cliff>=2.12.0"]
