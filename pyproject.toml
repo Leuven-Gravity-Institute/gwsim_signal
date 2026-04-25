@@ -82,36 +82,6 @@ markers = [
   "unit: fast offline tests",
 ]
 
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py, integration, spark, all
-
-[testenv]
-commands =
-    pytest -m "not integration and not spark" {posargs}
-
-[testenv:integration]
-commands =
-    pytest -m "integration" {posargs}
-
-[testenv:spark]
-extras = spark
-setenv =
-       PYSPARK_DRIVER_PYTHON = {envpython}
-       PYSPARK_PYTHON = {envpython}
-commands =
-    pytest -m "spark" {posargs}
-
-[testenv:all]
-extras = all
-setenv =
-       PYSPARK_DRIVER_PYTHON = {envpython}
-       PYSPARK_PYTHON = {envpython}
-commands =
-    pytest {posargs}
-"""
-
 [tool.ruff]
 line-length = 120 # Matches Black's default
 target-version = "py312" # Align with CI (3.12–3.14) and requires-python (>=3.12)
