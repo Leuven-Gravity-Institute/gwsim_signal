@@ -5,6 +5,13 @@ from __future__ import annotations
 import subprocess
 import sys
 
+try:
+    import pytest
+except ModuleNotFoundError:  # pragma: no cover - used in isolated wheel smoke runs.
+    pytestmark = ()
+else:
+    pytestmark = pytest.mark.integration
+
 import gwmock_signal
 
 
@@ -14,8 +21,9 @@ def test_basic_import() -> None:
     print(f"Package version: {gwmock_signal.__version__}")
 
     # Ensure it's not importing the local folder
-    if "site-packages" not in gwmock_signal.__file__ and "dist" not in gwmock_signal.__file__:
-        print(f"Warning: Package imported from unexpected location: {gwmock_signal.__file__}")
+    assert "site-packages" in gwmock_signal.__file__ or "dist" in gwmock_signal.__file__, (
+        f"Package imported from unexpected location: {gwmock_signal.__file__}"
+    )
 
 
 def test_cli_help() -> None:
