@@ -615,7 +615,7 @@ dev = [
     { name = "pytest-github-actions-annotate-failures", specifier = ">=0.4.0" },
     { name = "pytest-mock", specifier = ">=3.15.1" },
     { name = "pytest-runner", specifier = ">=6.0.1" },
-    { name = "ruff", specifier = ">=0.15.11" },
+    { name = "ruff", specifier = ">=0.15.12" },
 ]
 docs = [
     { name = "mkdocstrings-python", specifier = ">=2.0.3" },

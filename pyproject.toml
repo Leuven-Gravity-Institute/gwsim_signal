@@ -28,7 +28,7 @@ dependencies = [
 [dependency-groups]
 dev = [
   "bandit[toml]>=1.9.4",
-  "ruff>=0.15.11",
+  "ruff>=0.15.12",
   "pre-commit>=4.6.0",
   "pytest-cov>=7.1.0",
   "pytest-mock>=3.15.1",
