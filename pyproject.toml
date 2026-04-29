@@ -19,7 +19,7 @@ classifiers = [
 requires-python = ">=3.12,<3.14"
 dynamic = ["version"]
 dependencies = [
-  "typer>=0.24.2",
+  "typer>=0.25.0",
   "gwpy>=4.0.1",
   "pycbc>=2.11.0",
   "pyyaml>=6.0.3",
@@ -38,7 +38,7 @@ dev = [
 ]
 docs = ["zensical>=0.0.36", "mkdocstrings-python>=2.0.3"]
 build = ["hatch>=1.16.5"]
-release = ["git-cliff>=2.12.0"]
+release = ["git-cliff>=2.13.1"]
 
 [project.scripts]
 gwmock-signal = "gwmock_signal.cli.main:app"
