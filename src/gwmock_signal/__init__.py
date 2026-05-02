@@ -18,6 +18,11 @@ from __future__ import annotations
 from gwmock_signal.detector import CustomDetector
 from gwmock_signal.multichannel.stack import DetectorStrainStack
 from gwmock_signal.network import Network
+from gwmock_signal.registry import (
+    list_registered_source_types,
+    register_simulator_backend,
+    resolve_simulator_backend,
+)
 from gwmock_signal.simulator import CBCSimulator, GWSimulator, TransientSimulator
 from gwmock_signal.version import __version__
 
@@ -29,4 +34,7 @@ __all__ = [
     "Network",
     "TransientSimulator",
     "__version__",
+    "list_registered_source_types",
+    "register_simulator_backend",
+    "resolve_simulator_backend",
 ]
