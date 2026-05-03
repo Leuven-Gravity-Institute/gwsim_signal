@@ -32,20 +32,26 @@ rules, and method contracts** are documented only under
 ```python
 import numpy as np
 
-from gwmock_signal.waveform import pycbc_waveform_wrapper
+from gwmock_signal.waveform import WaveformFactory
 from gwmock_signal.projection import project_polarizations_to_network
 from gwmock_signal.multichannel import DetectorStrainStack
 
 names = ["H1", "L1", "V1"]
-pol = pycbc_waveform_wrapper(
-    tc=1_400_000_000.0,
+factory = WaveformFactory()
+pol = factory.generate(
+    "IMRPhenomD",
+    {
+        "tc": 1_400_000_000.0,
+        "detector_frame_mass_1": 30.0,
+        "detector_frame_mass_2": 24.0,
+        "spin_1z": 0.0,
+        "spin_2z": 0.0,
+        "distance": 400.0,
+        "inclination": 0.0,
+        "coa_phase": 0.0,
+    },
     sampling_frequency=4096.0,
     minimum_frequency=20.0,
-    waveform_model="IMRPhenomD",
-    mass1=30.0,
-    mass2=24.0,
-    spin1z=0.0,
-    spin2z=0.0,
 )
 strains = project_polarizations_to_network(
     pol,

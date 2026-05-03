@@ -50,10 +50,19 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install gwmock-signal
 ```
 
-The wheel includes **runtime dependencies only** (`typer`, `gwpy`, `pycbc`,
-`pyyaml`, and their transitive installs). There are **no PyPI extras** such as
-`gwmock-signal[dev]`; tooling lives in **uv dependency groups** in the
-repository (see **Install from source**).
+The wheel includes **runtime dependencies** declared in `pyproject.toml`:
+**`typer`**, **`gwpy`**, **`lalsuite`**, **`pyyaml`**, and their transitive
+installs. **PyCBC** is **not** a core dependency; install it with the optional
+extra **`gwmock-signal[pycbc]`** when you want the PyCBC waveform backend or the
+`pycbc_waveform_wrapper` helper.
+
+There is **no** `gwmock-signal[dev]` extra on PyPI; contributor tooling lives in
+**uv dependency groups** in the repository (see **Install from source**).
+
+```bash
+# Optional waveform backend (PyCBC)
+uv pip install 'gwmock-signal[pycbc]'
+```
 
 ## Install from source
 
@@ -121,11 +130,17 @@ Declared in `pyproject.toml` for the library:
 
 - **typer** — CLI (`gwmock-signal` entry point)
 - **gwpy** — `TimeSeries` / GW I/O conventions
-- **pycbc** — waveforms, detector geometry, and related utilities
+- **lalsuite** — default time-domain CBC waveforms (LALSimulation) and related
+  LAL types
 - **pyyaml** — configuration parsing where used
 
-Numerical arrays (`numpy`, etc.) are pulled in transitively by `gwpy` and
-`pycbc`.
+**Optional** (`pip install 'gwmock-signal[pycbc]'`):
+
+- **pycbc** — alternate waveform backend (`PyCBCBackend`) and
+  `pycbc_waveform_wrapper`
+
+Numerical arrays (`numpy`, etc.) are pulled in transitively (for example by
+`gwpy` and `lalsuite`).
 
 ## Getting help
 

@@ -47,9 +47,10 @@ The JSON object must include every **required** CBC key understood by
 | `declination`           | Declination (radians)                                                       |
 | `polarization_angle`    | Polarization angle ψ (radians)                                              |
 
-Additional keys (for example `spin_1z`, `spin_2z`, `coa_phase`) are forwarded to
-the waveform generator when the chosen approximant accepts them. Exact supported
-keys follow **PyCBC** for the selected `--approximant`.
+Additional keys (for example `spin_1z`, `spin_2z`, `coa_phase`) are passed to
+the waveform backend. The default **`--backend lal`** implementation accepts
+only the parameters documented for LAL time-domain generation (unknown keys
+error). **`--backend pycbc`** forwards extras like PyCBC’s `get_td_waveform`.
 
 Minimal example file `cbc.json`:
 
@@ -91,7 +92,8 @@ The value is resolved in order:
 | `--sample-rate` |       4096 | Sample rate (Hz) of the synthetic background                   |
 | `--f-min`       |         20 | Low-frequency cutoff (Hz) for waveform generation              |
 | `--duration`    |         16 | Length (seconds) of the zero background; centred on `coa_time` |
-| `--approximant` | IMRPhenomD | PyCBC time-domain approximant name                             |
+| `--approximant` | IMRPhenomD | Time-domain approximant string for the active `--backend`      |
+| `--backend`     |        lal | Waveform engine: `lal` (LALSimulation, default) or `pycbc`     |
 | `--seed`        |   _(none)_ | Optional `numpy` random seed before building data              |
 
 ### Example

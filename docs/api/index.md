@@ -21,22 +21,23 @@ tree (`src/gwmock_signal/`).
 
 ## Sections
 
-| Section                           | Contents                                                                                  |
-| --------------------------------- | ----------------------------------------------------------------------------------------- |
-| **[Waveform](waveform/)**         | `pycbc_waveform_wrapper`, `WaveformFactory`                                               |
-| **[Projection](projection/)**     | `project_polarizations_to_network`                                                        |
-| **[Injection](injection/)**       | `inject_strain`, `inject_strains_sequential`                                              |
-| **[Pipeline](pipeline/)**         | `inject_cbc_signal` (CBC orchestration)                                                   |
-| **[Multichannel](multichannel/)** | `DetectorStrainStack`                                                                     |
-| **[Network](network/)**           | `Network` (presets, `from_file`, detector lists)                                          |
-| **[Simulator](simulator/)**       | `GWSimulator`, `TransientSimulator`, `CBCSimulator`                                       |
-| **[Registry](registry/)**         | `resolve_simulator_backend`, `register_simulator_backend`, `list_registered_source_types` |
-| **[Utility](utils/)**             | Logging and other helpers                                                                 |
+| Section                           | Contents                                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **[Waveform](waveform/)**         | `WaveformFactory`, `WaveformBackend`, `LALSimulationBackend`, `PyCBCBackend`, `pycbc_waveform_wrapper` |
+| **[Projection](projection/)**     | `project_polarizations_to_network`                                                                     |
+| **[Injection](injection/)**       | `inject_strain`, `inject_strains_sequential`                                                           |
+| **[Pipeline](pipeline/)**         | `inject_cbc_signal` (CBC orchestration)                                                                |
+| **[Multichannel](multichannel/)** | `DetectorStrainStack`                                                                                  |
+| **[Network](network/)**           | `Network` (presets, `from_file`, detector lists)                                                       |
+| **[Simulator](simulator/)**       | `GWSimulator`, `TransientSimulator`, `CBCSimulator`                                                    |
+| **[Registry](registry/)**         | `resolve_simulator_backend`, `register_simulator_backend`, `list_registered_source_types`              |
+| **[Utility](utils/)**             | Logging and other helpers                                                                              |
 
 ## Main entry points (quick links)
 
-- **[Waveform](waveform/)** — Time-domain polarizations via PyCBC
-  (`pycbc_waveform_wrapper`, `WaveformFactory`).
+- **[Waveform](waveform/)** — Time-domain polarizations: `WaveformFactory` over
+  `LALSimulationBackend` (default) or `PyCBCBackend` (optional); direct
+  `pycbc_waveform_wrapper` for PyCBC-only workflows.
 - **[Projection](projection/)** — Strain per detector
   (`project_polarizations_to_network`).
 - **[Injection](injection/)** — Strain into segments (`inject_strain`,
