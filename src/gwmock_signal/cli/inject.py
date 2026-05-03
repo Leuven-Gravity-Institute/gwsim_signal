@@ -136,7 +136,10 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
     backend_name = backend.strip().lower()
     if backend_name not in {"lal", "pycbc"}:
         raise typer.BadParameter("--backend must be either 'lal' or 'pycbc'", param_hint="--backend")
-    waveform_backend = LALSimulationBackend() if backend_name == "lal" else PyCBCBackend()
+    try:
+        waveform_backend = LALSimulationBackend() if backend_name == "lal" else PyCBCBackend()
+    except ImportError as exc:
+        raise typer.BadParameter(str(exc), param_hint="--backend") from exc
 
     # Build zero-noise background centred on coa_time
     try:
