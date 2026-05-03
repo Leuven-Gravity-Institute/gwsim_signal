@@ -22,6 +22,8 @@ _SOURCE_TYPE_REGISTRY: dict[str, type[GWSimulator]] = {}
 
 def _normalize_source_type(source_type: str) -> str:
     """Return the canonical registry key for a source type string."""
+    if not isinstance(source_type, str):
+        raise TypeError("source_type must be a string")
     normalized = source_type.strip().lower()
     if not normalized:
         raise ValueError("source_type must be a non-empty string")
