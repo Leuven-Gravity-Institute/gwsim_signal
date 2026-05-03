@@ -383,7 +383,7 @@ class TestSourceTypeRegistry:
             def required_params(self) -> frozenset[str]:
                 return frozenset()
 
-            def simulate(self, params) -> DetectorStrainStack:  # type: ignore[override]
+            def simulate(self, strain, params, detector) -> DetectorStrainStack:  # type: ignore[override]
                 raise NotImplementedError
 
         register_simulator_backend("stochastic", _StubSimulator)
@@ -398,7 +398,7 @@ class TestSourceTypeRegistry:
             def required_params(self) -> frozenset[str]:
                 return frozenset()
 
-            def simulate(self, params) -> DetectorStrainStack:  # type: ignore[override]
+            def simulate(self, strain, params, detector) -> DetectorStrainStack:  # type: ignore[override]
                 raise NotImplementedError
 
         class _SecondStub(GWSimulator):
@@ -406,7 +406,7 @@ class TestSourceTypeRegistry:
             def required_params(self) -> frozenset[str]:
                 return frozenset()
 
-            def simulate(self, params) -> DetectorStrainStack:  # type: ignore[override]
+            def simulate(self, strain, params, detector) -> DetectorStrainStack:  # type: ignore[override]
                 raise NotImplementedError
 
         register_simulator_backend("burst", _FirstStub)
