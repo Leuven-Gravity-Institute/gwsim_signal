@@ -20,15 +20,17 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from gwpy.timeseries import TimeSeries
 
-from gwmock_signal.detector import CustomDetector
 from gwmock_signal.injection import inject_strain
 from gwmock_signal.multichannel.stack import DetectorStrainStack
 from gwmock_signal.projection.network import project_polarizations_to_network
-from gwmock_signal.waveform import WaveformFactory
+from gwmock_signal.waveform import WaveformBackend, WaveformFactory
+
+if TYPE_CHECKING:
+    from gwmock_signal.detector import CustomDetector
 
 logger = logging.getLogger("gwmock_signal.simulator")
 
@@ -167,7 +169,7 @@ class TransientSimulator(GWSimulator):
             raise ValueError(f"Missing required parameters: {sorted(missing_projection)}")
 
         # Normalise detector entries so dict lookups use plain string keys.
-        str_names: list[str] = [d.name if isinstance(d, CustomDetector) else d for d in detector_names]
+        str_names: list[str] = [d.name if hasattr(d, "name") and not isinstance(d, str) else d for d in detector_names]
 
         hp, hc = self.generate_polarizations(params, sampling_frequency, minimum_frequency)
         projected = project_polarizations_to_network(
@@ -192,19 +194,20 @@ class TransientSimulator(GWSimulator):
 class CBCSimulator(TransientSimulator):
     """Compact binary coalescence simulator backed by ``WaveformFactory``.
 
-    Generates time-domain polarizations via PyCBC (or any registered model),
+    Generates time-domain polarizations via a pluggable waveform backend,
     projects them onto the requested detectors, and injects them into background
     strain. ``waveform_model`` is a CBC concern and is supplied at construction
     time, keeping the base-class ``simulate`` interface source-agnostic.
 
     The public interface accepts **gwmock-pop canonical parameter names**
     (e.g. ``detector_frame_mass_1``, ``coa_time``, ``polarization_angle``).
-    Translation to PyCBC shortnames is handled internally via
-    ``_CANONICAL_TO_PYCBC`` and is invisible to callers.
+    Backend-specific translation is handled internally and is invisible to callers.
 
     Args:
-        waveform_model: PyCBC time-domain approximant name or any model
+        waveform_model: Time-domain approximant name or any model
             registered with ``WaveformFactory`` (e.g. ``'IMRPhenomD'``).
+        waveform_backend: Optional waveform backend instance. Defaults to
+            ``LALSimulationBackend`` through ``WaveformFactory``.
     """
 
     #: Minimum parameter keys required by the CBC pipeline (gwmock-pop canonical names).
@@ -221,29 +224,16 @@ class CBCSimulator(TransientSimulator):
         }
     )
 
-    #: Mapping from gwmock-pop canonical names to PyCBC shortnames.
-    #: Applied internally before every PyCBC call; never visible to callers.
-    _CANONICAL_TO_PYCBC: ClassVar[dict[str, str]] = {
-        "detector_frame_mass_1": "mass1",
-        "detector_frame_mass_2": "mass2",
-        "spin_1x": "spin1x",
-        "spin_1y": "spin1y",
-        "spin_1z": "spin1z",
-        "spin_2x": "spin2x",
-        "spin_2y": "spin2y",
-        "spin_2z": "spin2z",
-        "coa_time": "tc",
-        "polarization_angle": "polarization",
-    }
-
-    def __init__(self, waveform_model: str) -> None:
+    def __init__(self, waveform_model: str, waveform_backend: WaveformBackend | None = None) -> None:
         """Initialise with the waveform model name.
 
         Args:
-            waveform_model: PyCBC time-domain approximant name or any model
+            waveform_model: Time-domain approximant name or any model
                 registered with ``WaveformFactory``.
+            waveform_backend: Optional waveform backend instance.
         """
         self._waveform_model = waveform_model
+        self._waveform_factory = WaveformFactory(backend=waveform_backend)
 
     @property
     def waveform_model(self) -> str:
@@ -263,11 +253,8 @@ class CBCSimulator(TransientSimulator):
     ) -> tuple[TimeSeries, TimeSeries]:
         """Delegate waveform generation to ``WaveformFactory``.
 
-        Remaps gwmock-pop canonical parameter names to PyCBC shortnames via
-        ``_CANONICAL_TO_PYCBC`` before forwarding to the waveform generator.
-        Projection-specific keys (``right_ascension``, ``declination``,
-        ``polarization_angle``) are excluded — they are consumed by
-        ``TransientSimulator.simulate``.
+        Projection-specific keys are excluded because they are consumed by
+        ``TransientSimulator.simulate`` rather than by waveform generation.
 
         Args:
             params: CBC source parameters using gwmock-pop canonical names
@@ -278,24 +265,16 @@ class CBCSimulator(TransientSimulator):
         Returns:
             Tuple of ``(hp, hc)`` GWpy ``TimeSeries`` objects.
         """
-        alias_conflicts = {
-            canonical: legacy
-            for canonical, legacy in self._CANONICAL_TO_PYCBC.items()
-            if canonical in params and legacy in params
-        }
-        if alias_conflicts:
-            pairs = ", ".join(f"{canonical}/{legacy}" for canonical, legacy in sorted(alias_conflicts.items()))
-            raise ValueError(f"Do not mix canonical and PyCBC aliases in params: {pairs}")
-
-        # Remap canonical → PyCBC names transparently before any PyCBC call.
-        remapped = {self._CANONICAL_TO_PYCBC.get(k, k): v for k, v in params.items()}
         waveform_params = {
-            k: v for k, v in remapped.items() if k not in {"right_ascension", "declination", "polarization"}
+            k: v
+            for k, v in params.items()
+            if k not in {"right_ascension", "declination", "polarization_angle", "coa_time"}
         }
 
-        result = WaveformFactory().generate(
+        result = self._waveform_factory.generate(
             self._waveform_model,
             waveform_params,
+            tc=params["coa_time"],
             sampling_frequency=sampling_frequency,
             minimum_frequency=minimum_frequency,
         )

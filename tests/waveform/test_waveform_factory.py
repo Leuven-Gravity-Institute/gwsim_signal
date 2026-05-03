@@ -9,15 +9,17 @@ import pytest
 from astropy import units as u
 from gwpy.timeseries import TimeSeries
 
-from gwmock_signal.waveform import WaveformFactory, pycbc_waveform_wrapper
+from gwmock_signal.waveform import LALSimulationBackend, WaveformBackend, WaveformFactory, pycbc_waveform_wrapper
 
 
-def test_list_models_returns_list() -> None:
-    """list_models() returns a non-empty list containing built-in approximants."""
+@patch.object(LALSimulationBackend, "available_approximants", return_value=["IMRPhenomD", "SEOBNRv4"])
+def test_list_models_returns_list(mock_available_approximants) -> None:
+    """list_models() reflects the default backend's available approximants."""
     factory = WaveformFactory()
     models = factory.list_models()
     assert isinstance(models, list)
     assert "IMRPhenomD" in models
+    mock_available_approximants.assert_called_once()
 
 
 def test_register_model_non_callable_raises_type_error() -> None:
@@ -100,24 +102,26 @@ def test_register_model_string_dotted_import() -> None:
     assert factory.get_model("pycbc_dotted") is pycbc_waveform_wrapper
 
 
-@patch("gwmock_signal.waveform.pycbc_wrapper.get_td_waveform")
-def test_factory_generate_delegates(mock_get_td):
-    """Built-in model calls PyCBC `get_td_waveform` once."""
-    hp = MagicMock()
-    hp.start_time = 0.0
-    hp.delta_t = 1 / 4096
-    hp.data = np.zeros(256)
-    hc = MagicMock()
-    hc.start_time = 0.0
-    hc.delta_t = 1 / 4096
-    hc.data = np.zeros(256)
-    mock_get_td.return_value = (hp, hc)
+def test_factory_generate_delegates_to_backend() -> None:
+    """Built-in model dispatch uses the configured backend implementation."""
+    backend = MagicMock(spec=WaveformBackend)
+    backend.available_approximants.return_value = ["IMRPhenomD"]
+    hp = TimeSeries(np.ones(16), t0=100.0, dt=1.0 / 4096)
+    hc = TimeSeries(np.zeros(16), t0=100.0, dt=1.0 / 4096)
+    backend.generate_td_waveform.return_value = {"plus": hp, "cross": hc}
 
-    factory = WaveformFactory()
+    factory = WaveformFactory(backend=backend)
     factory.generate(
         "IMRPhenomD",
         {"tc": 100.0, "mass1": 10.0, "mass2": 10.0},
         sampling_frequency=4096.0,
         minimum_frequency=20.0,
     )
-    mock_get_td.assert_called_once()
+    backend.generate_td_waveform.assert_called_once_with(
+        approximant="IMRPhenomD",
+        tc=100.0,
+        sampling_frequency=4096.0,
+        minimum_frequency=20.0,
+        mass1=10.0,
+        mass2=10.0,
+    )

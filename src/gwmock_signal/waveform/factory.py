@@ -11,10 +11,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-"""Registry of waveform generators keyed by approximant or custom name.
-
-See `docs/user_guide/waveform.md` (examples) and `docs/api/waveform/index.md` (API reference).
-"""
+"""Registry of waveform generators keyed by approximant or custom name."""
 
 from __future__ import annotations
 
@@ -24,9 +21,8 @@ from collections.abc import Callable
 from typing import Any
 
 from gwpy.timeseries import TimeSeries
-from pycbc.waveform import td_approximants
 
-from gwmock_signal.waveform.pycbc_wrapper import pycbc_waveform_wrapper
+from gwmock_signal.waveform.backends import LALSimulationBackend, WaveformBackend
 
 logger = logging.getLogger("gwmock_signal.waveform")
 
@@ -34,23 +30,51 @@ logger = logging.getLogger("gwmock_signal.waveform")
 class WaveformFactory:
     """Registry and dispatcher for time-domain waveform generators.
 
-    On construction, every name returned by PyCBC
-    [`td_approximants`](https://pycbc.org/pycbc/latest/html/waveform.html) is
-    registered and mapped to ``pycbc_waveform_wrapper``.
+    On construction, every name returned by the configured backend is registered
+    and mapped to that backend's ``generate_td_waveform`` implementation.
     You may register additional names pointing at custom callables. See package docs for examples.
     """
 
-    def __init__(self) -> None:
-        """Build the registry of built-in PyCBC TD approximants.
+    def __init__(self, backend: WaveformBackend | None = None) -> None:
+        """Build the registry of built-in backend approximants.
 
         Note:
-            Importing PyCBC and enumerating approximants can be slow; reuse one factory
+            Enumerating approximants can be slow; reuse one factory
             instance in tight loops instead of creating many factories.
         """
-        self._models: dict[str, Callable[..., dict[str, TimeSeries]]] = dict.fromkeys(
-            td_approximants(),
-            pycbc_waveform_wrapper,
-        )
+        self._backend = backend or LALSimulationBackend()
+        self._models: dict[str, Callable[..., dict[str, TimeSeries]]] = {
+            name: self._wrap_backend_call(name) for name in self._backend.available_approximants()
+        }
+
+    def _wrap_backend_call(self, default_approximant: str) -> Callable[..., dict[str, TimeSeries]]:
+        """Adapt the backend interface to the factory's callable registry contract."""
+
+        def _call_backend(
+            *,
+            waveform_model: str | None = None,
+            approximant: str | None = None,
+            tc: float,
+            sampling_frequency: float,
+            minimum_frequency: float,
+            **params: Any,
+        ) -> dict[str, TimeSeries]:
+            for supplied_name in (waveform_model, approximant):
+                if supplied_name is not None and supplied_name != default_approximant:
+                    raise ValueError(
+                        f"Registered model {default_approximant!r} cannot be called with conflicting "
+                        f"approximant {supplied_name!r}."
+                    )
+            model_name = default_approximant
+            return self._backend.generate_td_waveform(
+                approximant=model_name,
+                tc=tc,
+                sampling_frequency=sampling_frequency,
+                minimum_frequency=minimum_frequency,
+                **params,
+            )
+
+        return _call_backend
 
     def register_model(self, name: str, factory_func: Callable[..., Any] | str) -> None:
         """Register or overwrite a waveform model under ``name``.
@@ -105,7 +129,7 @@ class WaveformFactory:
         """Return every registered waveform model name, in dict iteration order.
 
         Returns:
-            List of keys (PyCBC TD approximants plus any custom registrations).
+            List of keys (backend approximants plus any custom registrations).
         """
         return list(self._models.keys())
 

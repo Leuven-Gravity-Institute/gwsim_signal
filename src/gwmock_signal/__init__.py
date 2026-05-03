@@ -15,24 +15,51 @@
 
 from __future__ import annotations
 
-from gwmock_signal.detector import CustomDetector
-from gwmock_signal.multichannel.stack import DetectorStrainStack
-from gwmock_signal.network import Network
-from gwmock_signal.registry import (
-    list_registered_source_types,
-    register_simulator_backend,
-    resolve_simulator_backend,
-)
-from gwmock_signal.simulator import CBCSimulator, GWSimulator, TransientSimulator
+from importlib import import_module
+from typing import Any
+
 from gwmock_signal.version import __version__
+
+_PUBLIC_SYMBOLS = {
+    "CBCSimulator": ("gwmock_signal.simulator", "CBCSimulator"),
+    "CustomDetector": ("gwmock_signal.detector", "CustomDetector"),
+    "DetectorStrainStack": ("gwmock_signal.multichannel.stack", "DetectorStrainStack"),
+    "GWSimulator": ("gwmock_signal.simulator", "GWSimulator"),
+    "LALSimulationBackend": ("gwmock_signal.waveform.backends", "LALSimulationBackend"),
+    "Network": ("gwmock_signal.network", "Network"),
+    "TransientSimulator": ("gwmock_signal.simulator", "TransientSimulator"),
+    "WaveformBackend": ("gwmock_signal.waveform.backends", "WaveformBackend"),
+    "list_registered_source_types": ("gwmock_signal.registry", "list_registered_source_types"),
+    "register_simulator_backend": ("gwmock_signal.registry", "register_simulator_backend"),
+    "resolve_simulator_backend": ("gwmock_signal.registry", "resolve_simulator_backend"),
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Import public symbols lazily so optional dependencies stay optional."""
+    try:
+        module_name, attr_name = _PUBLIC_SYMBOLS[name]
+    except KeyError as exc:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from exc
+    value = getattr(import_module(module_name), attr_name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    """Return standard module attributes plus lazy public exports."""
+    return sorted(set(globals()) | set(__all__))
+
 
 __all__ = [
     "CBCSimulator",
     "CustomDetector",
     "DetectorStrainStack",
     "GWSimulator",
+    "LALSimulationBackend",
     "Network",
     "TransientSimulator",
+    "WaveformBackend",
     "__version__",
     "list_registered_source_types",
     "register_simulator_backend",

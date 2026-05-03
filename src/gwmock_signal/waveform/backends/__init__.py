@@ -11,18 +11,16 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-"""Waveform generation and backend abstractions."""
+"""Waveform backend interfaces and concrete implementations."""
 
 from __future__ import annotations
 
-from gwmock_signal.waveform.backends import LALSimulationBackend, PyCBCBackend, WaveformBackend
-from gwmock_signal.waveform.factory import WaveformFactory
-from gwmock_signal.waveform.pycbc_wrapper import pycbc_waveform_wrapper
+from gwmock_signal.waveform.backends.base import WaveformBackend
+from gwmock_signal.waveform.backends.lal import LALSimulationBackend
+from gwmock_signal.waveform.backends.pycbc import PyCBCBackend
 
 __all__ = [
     "LALSimulationBackend",
     "PyCBCBackend",
     "WaveformBackend",
-    "WaveformFactory",
-    "pycbc_waveform_wrapper",
 ]
