@@ -285,9 +285,9 @@ def test_inject_cbc_pycbc_backend_surfaces_install_hint(params_file: Path) -> No
                 "pycbc",
             ],
         )
-    assert result.exit_code != 0
-    assert isinstance(result.exception, ImportError)
-    assert "gwmock-signal[pycbc]" in str(result.exception)
+    assert result.exit_code == 2
+    # ImportError from PyCBCBackend is wrapped as typer.BadParameter (SystemExit(2)).
+    assert "gwmock-signal[pycbc]" in result.output
 
 
 def test_inject_cbc_invalid_backend(params_file: Path) -> None:
