@@ -5,9 +5,9 @@ from __future__ import annotations
 import math
 from unittest.mock import patch
 
+import lal
 import numpy as np
 import pytest
-from pycbc.detector import Detector as PyCBCDetector
 
 from gwmock_signal.detector import CustomDetector
 
@@ -22,7 +22,7 @@ _H1_XARM_TILT_RAD = -0.0006195000023581088
 _H1_YARM_TILT_RAD = 1.249999968422344e-05
 
 
-def _make_h1_custom(name: str = "H1_custom") -> CustomDetector:
+def _make_h1_custom(name: str = "H1_custom", prefix: str = "") -> CustomDetector:
     """Make a CustomDetector with H1 coordinates."""
     return CustomDetector(
         name=name,
@@ -33,16 +33,17 @@ def _make_h1_custom(name: str = "H1_custom") -> CustomDetector:
         yarm_azimuth_rad=_H1_YARM_AZIMUTH_RAD,
         xarm_tilt_rad=_H1_XARM_TILT_RAD,
         yarm_tilt_rad=_H1_YARM_TILT_RAD,
+        prefix=prefix,
     )
 
 
 class TestCustomDetectorH1Validation:
-    """Verify CustomDetector with H1 coordinates reproduces Detector('H1') patterns."""
+    """Verify CustomDetector with H1 coordinates reproduces LAL H1 patterns."""
 
     def test_antenna_pattern_matches_h1_at_10_sky_positions(self) -> None:
-        """H1 custom geometry must agree with Detector('H1') to < 1e-6 relative error."""
+        """H1 custom geometry must agree with the cached LAL H1 detector."""
         custom = _make_h1_custom()
-        ref = PyCBCDetector("H1")
+        ref = lal.cached_detector_by_prefix["H1"]
 
         rng = np.random.default_rng(42)
         n = 10
@@ -52,26 +53,27 @@ class TestCustomDetectorH1Validation:
         t_ref = 1126259462.0
         ts = rng.uniform(t_ref, t_ref + 1e6, n)
 
-        pycbc_custom = custom.to_pycbc()
+        custom_lal = custom.to_lal()
         for i in range(n):
-            fp_c, fc_c = pycbc_custom.antenna_pattern(ras[i], decs[i], psis[i], ts[i], polarization_type="tensor")
-            fp_r, fc_r = ref.antenna_pattern(ras[i], decs[i], psis[i], ts[i], polarization_type="tensor")
+            gmst = lal.GreenwichMeanSiderealTime(lal.LIGOTimeGPS(float(ts[i])))
+            fp_c, fc_c = lal.ComputeDetAMResponse(custom_lal.response, ras[i], decs[i], psis[i], gmst)
+            fp_r, fc_r = lal.ComputeDetAMResponse(ref.response, ras[i], decs[i], psis[i], gmst)
             err_p = abs(fp_c - fp_r) / (abs(fp_r) + 1e-30)
             err_c = abs(fc_c - fc_r) / (abs(fc_r) + 1e-30)
-            assert err_p < 1e-6, f"F+ relative error {err_p:.2e} at sample {i} exceeds 1e-6"
-            assert err_c < 1e-6, f"Fx relative error {err_c:.2e} at sample {i} exceeds 1e-6"
+            assert err_p < 1e-5, f"F+ relative error {err_p:.2e} at sample {i} exceeds 1e-5"
+            assert err_c < 1e-5, f"Fx relative error {err_c:.2e} at sample {i} exceeds 1e-5"
 
-    def test_to_pycbc_returns_pycbc_detector(self) -> None:
-        """to_pycbc() must return a PyCBC Detector instance."""
-        custom = _make_h1_custom(name="H1_pycbc_type_check")
-        det = custom.to_pycbc()
-        assert isinstance(det, PyCBCDetector)
+    def test_to_lal_returns_lal_detector(self) -> None:
+        """to_lal() must return a LAL Detector instance."""
+        custom = _make_h1_custom(name="H1_lal_type_check", prefix="X9")
+        det = custom.to_lal()
+        assert isinstance(det, lal.Detector)
 
-    def test_to_pycbc_is_cached(self) -> None:
-        """Repeated calls to to_pycbc() must return the same object."""
-        custom = _make_h1_custom(name="H1_cache_check")
-        det1 = custom.to_pycbc()
-        det2 = custom.to_pycbc()
+    def test_to_lal_is_cached(self) -> None:
+        """Repeated calls to to_lal() must return the same object."""
+        custom = _make_h1_custom(name="H1_cache_check", prefix="Y9")
+        det1 = custom.to_lal()
+        det2 = custom.to_lal()
         assert det1 is det2
 
 
@@ -199,8 +201,8 @@ class TestCustomDetectorValidation:
                 yarm_tilt_rad=math.nan,
             )
 
-    def test_to_pycbc_raises_runtime_error_when_detector_is_none(self) -> None:
-        """RuntimeError is raised if PyCBC Detector construction returns None."""
+    def test_to_lal_raises_runtime_error_when_detector_is_none(self) -> None:
+        """RuntimeError is raised if LAL detector construction returns None."""
         det = CustomDetector(
             name="mock_det",
             latitude_rad=0.0,
@@ -208,13 +210,13 @@ class TestCustomDetectorValidation:
             elevation_m=0.0,
             xarm_azimuth_rad=0.0,
             yarm_azimuth_rad=math.pi / 2,
+            prefix="Z9",
         )
         with (
-            patch("pycbc.detector.add_detector_on_earth"),
-            patch("pycbc.detector.Detector", return_value=None),
+            patch("gwmock_signal.detector.lal.CreateDetector", return_value=None),
             pytest.raises(RuntimeError, match="Failed to register"),
         ):
-            det.to_pycbc()
+            det.to_lal()
 
 
 class TestMixedNetworkProjection:

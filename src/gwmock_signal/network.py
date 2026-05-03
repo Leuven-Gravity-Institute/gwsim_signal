@@ -22,15 +22,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import pycbc.detector
+import lal
 
 if TYPE_CHECKING:
     from gwmock_signal.detector import CustomDetector
 
 # Convenience presets for common multi-detector networks.  These are *not* the
-# source of truth for which detector codes exist — PyCBC is.  Any code returned
-# by ``pycbc.detector.get_available_detectors()`` is valid independently of
-# what is listed here.  New PyCBC detectors are automatically usable via
+# source of truth for which detector codes exist — LAL is.  Any code returned
+# by ``lal.cached_detector_by_prefix`` is valid independently of what is listed
+# here.  New LAL detectors are automatically usable via
 # :meth:`Network.from_detectors` without touching this file.
 _NETWORK_PRESETS: dict[str, tuple[str, ...]] = {
     # LIGO Hanford + LIGO Livingston
@@ -46,7 +46,7 @@ _NETWORK_PRESETS: dict[str, tuple[str, ...]] = {
 }
 
 # Keys whose presence in an entry signals a full custom geometry rather than a
-# plain PyCBC alias string.  Both *_deg and *_rad variants are included so that
+# plain detector alias string.  Both *_deg and *_rad variants are included so that
 # either convention triggers CustomDetector construction.
 _geometry_keys: frozenset[str] = frozenset(
     {
@@ -107,6 +107,11 @@ def _load_data(path: Path) -> object:
     raise ValueError(f"Unsupported file extension {path.suffix!r}. Supported extensions: .yaml, .yml, .json")
 
 
+def list_lal_detectors() -> list[str]:
+    """Return every detector code available in the installed LAL bindings."""
+    return sorted(str(code) for code in lal.cached_detector_by_prefix)
+
+
 def _detector_from_entry(entry: dict) -> str | CustomDetector:
     """Convert one detector dict entry to a str alias or :class:`CustomDetector`.
 
@@ -114,7 +119,7 @@ def _detector_from_entry(entry: dict) -> str | CustomDetector:
         entry: Detector config mapping (must include ``"name"``).
 
     Returns:
-        The PyCBC detector code string when no geometry keys are present,
+        The LAL detector code string when no geometry keys are present,
         or a :class:`CustomDetector` instance.
 
     Raises:
@@ -133,6 +138,7 @@ def _detector_from_entry(entry: dict) -> str | CustomDetector:
     try:
         return CustomDetector(
             name=det_name,
+            prefix=str(entry.get("prefix", "")),
             latitude_rad=_parse_angle(entry, "latitude", required=True),
             longitude_rad=_parse_angle(entry, "longitude", required=True),
             elevation_m=float(entry["elevation_m"]),
@@ -151,8 +157,8 @@ class Network:
 
     Attributes:
         name: Human-readable label for the network.
-        detector_names: Ordered tuple of PyCBC/LAL detector prefix strings
-            (e.g. ``"H1"``) or
+        detector_names: Ordered tuple of LAL detector prefix strings (e.g.
+            ``"H1"``) or
             :class:`~gwmock_signal.detector.CustomDetector` instances.
     """
 
@@ -172,14 +178,14 @@ class Network:
     ) -> Network:
         """Construct a :class:`Network` from any sequence of detector specs.
 
-        String entries are validated against PyCBC's runtime detector list
-        (``pycbc.detector.get_available_detectors()``), so any detector code
-        that PyCBC knows about works here without any hard-coding.
+        String entries are validated against LAL's runtime detector list
+        (``lal.cached_detector_by_prefix``), so any detector code that the
+        installed LAL bindings know about works here without hard-coding.
         :class:`~gwmock_signal.detector.CustomDetector` instances are accepted
         as-is for non-standard geometries.
 
         Args:
-            detectors: Sequence of PyCBC detector code strings (e.g. ``"H1"``)
+            detectors: Sequence of LAL detector code strings (e.g. ``"H1"``)
                 or :class:`~gwmock_signal.detector.CustomDetector` instances.
             name: Optional human-readable label.  Defaults to the
                 comma-joined detector names.
@@ -188,7 +194,7 @@ class Network:
             A :class:`Network` containing exactly the specified detectors.
 
         Raises:
-            ValueError: If any string entry is not in PyCBC's available
+            ValueError: If any string entry is not in LAL's available
                 detector set, or if *detectors* is empty.
         """
         from gwmock_signal.detector import CustomDetector  # noqa: PLC0415
@@ -196,17 +202,17 @@ class Network:
         if not detectors:
             raise ValueError("detectors must be a non-empty sequence.")
 
-        pycbc_codes: set[str] = set(pycbc.detector.get_available_detectors())
+        lal_codes: set[str] = set(list_lal_detectors())
         validated: list[str | CustomDetector] = []
         for det in detectors:
             if isinstance(det, CustomDetector):
                 validated.append(det)
             else:
                 code = str(det)
-                if code not in pycbc_codes:
+                if code not in lal_codes:
                     raise ValueError(
-                        f"Unknown PyCBC detector code {code!r}. "
-                        f"Run Network.list_pycbc_detectors() to see available codes, "
+                        f"Unknown LAL detector code {code!r}. "
+                        f"Run Network.list_lal_detectors() to see available codes, "
                         "or use a CustomDetector for non-standard geometries."
                     )
                 validated.append(code)
@@ -223,7 +229,7 @@ class Network:
                 :meth:`list_names`.
 
         Returns:
-            A :class:`Network` whose ``detector_names`` are the PyCBC codes
+            A :class:`Network` whose ``detector_names`` are the detector codes
             for that preset.
 
         Raises:
@@ -239,9 +245,9 @@ class Network:
 
         The file must have a top-level ``name`` key (str) and a ``detectors``
         key containing a non-empty list of detector entries.  Each entry must
-        have a ``name`` field.  If any geometry key is present a
+        have a ``name`` field. If any geometry key is present a
         :class:`~gwmock_signal.detector.CustomDetector` is constructed;
-        otherwise the name is treated as a plain PyCBC detector code string.
+        otherwise the name is treated as a plain LAL detector code string.
 
         **Angle conventions** — every angle parameter accepts either a degrees
         variant (``*_deg``) or a radians variant (``*_rad``), but *not both* for
@@ -266,7 +272,7 @@ class Network:
 
         Returns:
             A :class:`Network` whose ``detector_names`` contains str entries
-            for PyCBC aliases and
+            for LAL detector aliases and
             :class:`~gwmock_signal.detector.CustomDetector` entries for
             user-defined geometries.
 
@@ -307,15 +313,11 @@ class Network:
         return sorted(_NETWORK_PRESETS.keys())
 
     @classmethod
-    def list_pycbc_detectors(cls) -> list[str]:
-        """Return every detector code available in the installed PyCBC, sorted.
-
-        This list is computed at call time from
-        ``pycbc.detector.get_available_detectors()``, so it automatically
-        reflects whatever PyCBC version is installed — no hard-coding required.
+    def list_lal_detectors(cls) -> list[str]:
+        """Return every detector code available in the installed LAL, sorted.
 
         Returns:
-            Sorted list of PyCBC/LAL detector prefix strings
+            Sorted list of LAL detector prefix strings
             (e.g. ``['E0', 'E1', 'H1', 'L1', 'V1', ...]``).
         """
-        return sorted(pycbc.detector.get_available_detectors())
+        return list_lal_detectors()

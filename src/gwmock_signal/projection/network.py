@@ -19,8 +19,10 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, cast
 
 import lal
-import lalsimulation
 import numpy as np
+from astropy import constants, coordinates, units
+from astropy.coordinates.matrix_utilities import rotation_matrix
+from astropy.time import Time
 from gwpy.timeseries import TimeSeries as GWpyTimeSeries
 from scipy.interpolate import interp1d
 
@@ -54,69 +56,132 @@ def _validate_polarizations(polarizations: Mapping[str, GWpyTimeSeries]) -> tupl
     return hp, hc
 
 
+def _get_lal_detector(prefix: str) -> lal.Detector:
+    """Return one detector from LAL's cached prefix registry."""
+    try:
+        return cast(lal.Detector, lal.cached_detector_by_prefix[prefix])
+    except KeyError as exc:
+        raise ValueError(
+            f"Unknown or unsupported detector {prefix!r}. Use a valid LAL interferometer code (e.g. 'H1', 'L1', 'V1')."
+        ) from exc
+
+
+def _gmst_accurate(t_gps: float) -> float:
+    """Return Greenwich mean sidereal time in radians using Astropy."""
+    return float(Time(float(t_gps), format="gps", scale="utc", location=(0, 0)).sidereal_time("mean").rad)
+
+
+def _reconstructed_geometry(prefix: str) -> tuple[np.ndarray, np.ndarray]:
+    """Return detector response and location reconstructed from one LAL detector."""
+    fr_detector = _get_lal_detector(prefix).frDetector
+
+    arm_response = np.array([[-1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+    rotation_longitude = rotation_matrix(-fr_detector.vertexLongitudeRadians * units.rad, "z")
+    rotation_latitude = rotation_matrix(-(np.pi / 2.0 - fr_detector.vertexLatitudeRadians) * units.rad, "y")
+
+    responses: list[np.ndarray] = []
+    for azimuth, altitude in (
+        (fr_detector.yArmAzimuthRadians, fr_detector.yArmAltitudeRadians),
+        (fr_detector.xArmAzimuthRadians, fr_detector.xArmAltitudeRadians),
+    ):
+        rotation_azimuth = rotation_matrix(azimuth * units.rad, "z")
+        rotation_altitude = rotation_matrix(-altitude * units.rad, "y")
+        rotation = rotation_longitude @ rotation_latitude @ rotation_azimuth @ rotation_altitude
+        responses.append(np.asarray(rotation @ arm_response @ rotation.T / 2.0, dtype=float))
+
+    location = coordinates.EarthLocation.from_geodetic(
+        fr_detector.vertexLongitudeRadians * units.rad,
+        fr_detector.vertexLatitudeRadians * units.rad,
+        height=fr_detector.vertexElevation * units.meter,
+    )
+    return responses[0] - responses[1], np.array([location.x.value, location.y.value, location.z.value], dtype=float)
+
+
 def _time_delay_from_earth_center_lal(
-    detector: lal.Detector,
+    prefix: str,
     *,
     right_ascension: float,
     declination: float,
     t_gps: float,
 ) -> float:
-    """Return the geocenter time delay for one built-in LAL detector."""
-    return float(
-        lal.TimeDelayFromEarthCenter(
-            detector.location,
-            right_ascension,
-            declination,
-            lal.LIGOTimeGPS(float(t_gps)),
-        )
+    """Return the geocenter time delay for one reconstructed detector geometry."""
+    _, location = _reconstructed_geometry(prefix)
+    gha = _gmst_accurate(t_gps) - right_ascension
+    cosdec = np.cos(declination)
+    propagation_direction = np.array(
+        [
+            cosdec * np.cos(gha),
+            -cosdec * np.sin(gha),
+            np.sin(declination),
+        ],
+        dtype=float,
     )
+    earth_center = np.array([0, 0, 0])
+    baseline = earth_center - location
+    return float(np.dot(baseline, propagation_direction) / constants.c.value)
 
 
 def _antenna_pattern_lal(
-    detector: lal.Detector,
+    prefix: str,
     *,
     right_ascension: float,
     declination: float,
     polarization_angle: float,
     t_gps: float,
 ) -> tuple[float, float]:
-    """Return tensor antenna-pattern factors for one built-in LAL detector."""
-    gmst = lal.GreenwichMeanSiderealTime(lal.LIGOTimeGPS(float(t_gps)))
-    fp, fc = lal.ComputeDetAMResponse(
-        detector.response,
-        right_ascension,
-        declination,
-        polarization_angle,
-        gmst,
+    """Return tensor antenna-pattern factors for one reconstructed detector geometry."""
+    response, _ = _reconstructed_geometry(prefix)
+    gha = _gmst_accurate(t_gps) - right_ascension
+    cosgha = np.cos(gha)
+    singha = np.sin(gha)
+    cosdec = np.cos(declination)
+    sindec = np.sin(declination)
+    cospsi = np.cos(polarization_angle)
+    sinpsi = np.sin(polarization_angle)
+
+    x = np.array(
+        [
+            -cospsi * singha - sinpsi * cosgha * sindec,
+            -cospsi * cosgha + sinpsi * singha * sindec,
+            sinpsi * cosdec,
+        ],
+        dtype=float,
     )
-    return float(fp), float(fc)
+    dx = response.dot(x)
+
+    y = np.array(
+        [
+            sinpsi * singha - cospsi * cosgha * sindec,
+            sinpsi * cosgha + cospsi * singha * sindec,
+            cospsi * cosdec,
+        ],
+        dtype=float,
+    )
+    dy = response.dot(y)
+
+    return float(np.sum(x * dx - y * dy)), float(np.sum(x * dy + y * dx))
 
 
-def _make_detectors(detector_specs: Sequence[DetectorSpec]) -> list[tuple[str, str, object]]:
-    """Instantiate detector backends; raise a clear error if a name is invalid.
+def _make_detectors(detector_specs: Sequence[DetectorSpec]) -> list[tuple[str, str]]:
+    """Resolve detector names to one LAL lookup key per output channel.
 
-    Accepts either built-in LAL IFO code strings or :class:`~gwmock_signal.detector.CustomDetector`
-    instances.
+    Accepts either built-in LAL IFO code strings or
+    :class:`~gwmock_signal.detector.CustomDetector` instances.
     """
-    out: list[tuple[str, str, object]] = []
+    out: list[tuple[str, str]] = []
 
     for raw in detector_specs:
         if isinstance(raw, str):
             name = str(raw)
-            try:
-                det = lalsimulation.DetectorPrefixToLALDetector(name)
-            except RuntimeError as exc:
-                raise ValueError(
-                    f"Unknown or unsupported detector {name!r}. Use a valid LAL interferometer code "
-                    "(e.g. 'H1', 'L1', 'V1')."
-                ) from exc
-            out.append((name, "lal", det))
+            _get_lal_detector(name)
+            out.append((name, name))
         else:
             from gwmock_signal.detector import CustomDetector  # noqa: PLC0415
 
             if not isinstance(raw, CustomDetector):
                 raise TypeError(f"Unsupported detector specification type: {type(raw).__name__}")
-            out.append((raw.name, "pycbc", raw.to_pycbc()))
+            detector = raw.to_lal()
+            out.append((raw.name, detector.frDetector.prefix))
     return out
 
 
@@ -131,9 +196,8 @@ def project_polarizations_to_network(  # noqa: PLR0913
 ) -> dict[str, GWpyTimeSeries]:
     """Project tensor plus/cross strains onto detectors using detector geometry.
 
-    Built-in detector codes are resolved through LAL. ``CustomDetector`` entries
-    continue to use their PyCBC-backed geometry adapter until that path is
-    replaced separately. Polarizations are interpolated in time with cubic
+    Built-in and custom detector codes are resolved through the LAL cached
+    detector registry. Polarizations are interpolated in time with cubic
     splines (see user guide for caveats at edges).
 
     Args:
@@ -188,82 +252,50 @@ def project_polarizations_to_network(  # noqa: PLR0913
 
     strains: dict[str, GWpyTimeSeries] = {}
 
-    for name, backend, det in detectors:
-        if backend == "lal":
-            detector = cast(lal.Detector, det)
-            if earth_rotation:
-                time_delays = np.asarray(
-                    [
-                        _time_delay_from_earth_center_lal(
-                            detector,
-                            right_ascension=right_ascension,
-                            declination=declination,
-                            t_gps=t,
-                        )
-                        for t in time_array
-                    ],
-                    dtype=float,
-                )
-                shifted_times = time_array_wrt_reference - time_delays
-                antenna = np.asarray(
-                    [
-                        _antenna_pattern_lal(
-                            detector,
-                            right_ascension=right_ascension,
-                            declination=declination,
-                            polarization_angle=polarization_angle,
-                            t_gps=t + delay,
-                        )
-                        for t, delay in zip(time_array, time_delays, strict=False)
-                    ],
-                    dtype=float,
-                )
-                fp_vals, fc_vals = antenna[:, 0], antenna[:, 1]
-            else:
-                time_delay = _time_delay_from_earth_center_lal(
-                    detector,
-                    right_ascension=right_ascension,
-                    declination=declination,
-                    t_gps=reference_time,
-                )
-                fp_vals, fc_vals = _antenna_pattern_lal(
-                    detector,
-                    right_ascension=right_ascension,
-                    declination=declination,
-                    polarization_angle=polarization_angle,
-                    t_gps=reference_time,
-                )
-                shifted_times = time_array_wrt_reference - time_delay
+    for name, prefix in detectors:
+        if earth_rotation:
+            time_delays = np.asarray(
+                [
+                    _time_delay_from_earth_center_lal(
+                        prefix,
+                        right_ascension=right_ascension,
+                        declination=declination,
+                        t_gps=t,
+                    )
+                    for t in time_array
+                ],
+                dtype=float,
+            )
+            shifted_times = time_array_wrt_reference - time_delays
+            antenna = np.asarray(
+                [
+                    _antenna_pattern_lal(
+                        prefix,
+                        right_ascension=right_ascension,
+                        declination=declination,
+                        polarization_angle=polarization_angle,
+                        t_gps=t + delay,
+                    )
+                    for t, delay in zip(time_array, time_delays, strict=False)
+                ],
+                dtype=float,
+            )
+            fp_vals, fc_vals = antenna[:, 0], antenna[:, 1]
         else:
-            pycbc_detector = det
-            if earth_rotation:
-                time_delays = pycbc_detector.time_delay_from_earth_center(
-                    right_ascension=right_ascension,
-                    declination=declination,
-                    t_gps=time_array,
-                )
-                shifted_times = time_array_wrt_reference - time_delays
-                fp_vals, fc_vals = pycbc_detector.antenna_pattern(
-                    right_ascension=right_ascension,
-                    declination=declination,
-                    polarization=polarization_angle,
-                    t_gps=time_array + time_delays,
-                    polarization_type="tensor",
-                )
-            else:
-                time_delay = pycbc_detector.time_delay_from_earth_center(
-                    right_ascension=right_ascension,
-                    declination=declination,
-                    t_gps=reference_time,
-                )
-                fp_vals, fc_vals = pycbc_detector.antenna_pattern(
-                    right_ascension=right_ascension,
-                    declination=declination,
-                    polarization=polarization_angle,
-                    t_gps=reference_time,
-                    polarization_type="tensor",
-                )
-                shifted_times = time_array_wrt_reference - time_delay
+            time_delay = _time_delay_from_earth_center_lal(
+                prefix,
+                right_ascension=right_ascension,
+                declination=declination,
+                t_gps=reference_time,
+            )
+            fp_vals, fc_vals = _antenna_pattern_lal(
+                prefix,
+                right_ascension=right_ascension,
+                declination=declination,
+                polarization_angle=polarization_angle,
+                t_gps=reference_time,
+            )
+            shifted_times = time_array_wrt_reference - time_delay
 
         hp_shifted = hp_func(shifted_times)
         hc_shifted = hc_func(shifted_times)
