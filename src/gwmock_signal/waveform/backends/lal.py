@@ -60,6 +60,8 @@ class LALSimulationBackend(WaveformBackend):
         if remaining:
             extras = ", ".join(sorted(remaining))
             raise ValueError(f"Unsupported LAL waveform parameters: {extras}")
+        if sampling_frequency <= 0:
+            raise ValueError("sampling_frequency must be > 0")
 
         approx_enum = lalsimulation.GetApproximantFromString(approximant)
         lal_params = lal.CreateDict()
