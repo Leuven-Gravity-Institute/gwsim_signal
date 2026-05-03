@@ -121,14 +121,12 @@ def test_unknown_detector_name():
         )
 
 
-@patch("gwmock_signal.projection.network.PyCBCDetector")
-def test_delegates_to_pycbc(mock_det_cls):
-    """Each detector name constructs a PyCBC Detector and returns one strain series."""
-    inst = MagicMock()
-    inst.time_delay_from_earth_center.return_value = np.zeros(8)
-    inst.antenna_pattern.return_value = (np.ones(8), np.zeros(8))
-    mock_det_cls.return_value = inst
-
+@patch("gwmock_signal.projection.network._antenna_pattern_lal", return_value=(1.0, 0.0))
+@patch("gwmock_signal.projection.network._time_delay_from_earth_center_lal", return_value=0.0)
+@patch("gwmock_signal.projection.network.lalsimulation.DetectorPrefixToLALDetector")
+def test_delegates_to_lal(mock_detector_lookup, mock_time_delay, mock_antenna_pattern):
+    """Each built-in detector name resolves through the LAL detector path."""
+    mock_detector_lookup.return_value = MagicMock()
     t0 = 0.0
     fs = 8.0
     hp = TimeSeries(np.ones(8), t0=t0, sample_rate=fs)
@@ -141,7 +139,9 @@ def test_delegates_to_pycbc(mock_det_cls):
         right_ascension=0.1,
         declination=0.2,
         polarization_angle=0.3,
-        earth_rotation=True,
+        earth_rotation=False,
     )
     assert set(out) == set(names)
-    assert mock_det_cls.call_count == len(names)
+    assert mock_detector_lookup.call_count == len(names)
+    assert mock_time_delay.call_count == len(names)
+    assert mock_antenna_pattern.call_count == len(names)

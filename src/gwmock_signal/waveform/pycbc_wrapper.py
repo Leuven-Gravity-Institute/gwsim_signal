@@ -18,10 +18,15 @@ See `docs/user_guide/waveform.md` (examples) and `docs/api/waveform/index.md` (A
 
 from __future__ import annotations
 
+import importlib
 from typing import Any
 
 from gwpy.timeseries import TimeSeries
-from pycbc.waveform import get_td_waveform
+
+
+def get_td_waveform(*args: Any, **kwargs: Any) -> tuple[Any, Any]:
+    """Import and call ``pycbc.waveform.get_td_waveform`` lazily."""
+    return importlib.import_module("pycbc.waveform").get_td_waveform(*args, **kwargs)
 
 
 def pycbc_waveform_wrapper(

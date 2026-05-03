@@ -10,6 +10,8 @@ from gwpy.timeseries import TimeSeries
 
 from gwmock_signal.waveform.pycbc_wrapper import pycbc_waveform_wrapper
 
+pytest.importorskip("pycbc", reason="pycbc not installed")
+
 
 class TestPyCBCWaveformWrapper:
     """Test suite for `pycbc_waveform_wrapper`."""

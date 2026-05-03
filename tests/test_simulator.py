@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
@@ -14,6 +18,9 @@ import gwmock_signal
 from gwmock_signal import GWSimulator, register_simulator_backend, resolve_simulator_backend
 from gwmock_signal.multichannel.stack import DetectorStrainStack
 from gwmock_signal.simulator import CBCSimulator, TransientSimulator, _json_default
+from gwmock_signal.waveform import LALSimulationBackend
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -146,6 +153,13 @@ class TestCBCSimulatorRequiredParams:
         """waveform_model property exposes the model passed at construction."""
         sim = CBCSimulator(waveform_model="IMRPhenomD")
         assert sim.waveform_model == "IMRPhenomD"
+
+    @patch("gwmock_signal.simulator.WaveformFactory")
+    def test_constructor_passes_waveform_backend_to_factory(self, mock_factory_cls):
+        """An explicit waveform backend is forwarded into WaveformFactory."""
+        backend = LALSimulationBackend()
+        CBCSimulator(waveform_model="IMRPhenomD", waveform_backend=backend)
+        mock_factory_cls.assert_called_once_with(backend=backend)
 
 
 class TestCBCSimulatorMissingParam:
@@ -318,6 +332,59 @@ class TestCBCSimulatorEndToEnd:
         assert any(np.any(result[name].value != 0.0) for name in detector_names), (
             "Expected non-zero strain in at least one detector after injection"
         )
+
+    def test_lal_backend_simulate_runs_without_pycbc_for_builtin_detectors(self) -> None:
+        """The CBC+LAL backend path works when PyCBC imports are blocked."""
+        code = """
+import builtins
+import numpy as np
+from gwpy.timeseries import TimeSeries
+
+original_import = builtins.__import__
+
+def blocked_import(name, globals=None, locals=None, fromlist=(), level=0):
+    if name.startswith("pycbc"):
+        raise ModuleNotFoundError("No module named 'pycbc'")
+    return original_import(name, globals, locals, fromlist, level)
+
+builtins.__import__ = blocked_import
+
+from gwmock_signal.simulator import CBCSimulator
+from gwmock_signal.waveform.backends import LALSimulationBackend
+
+params = {
+    "detector_frame_mass_1": 36.0,
+    "detector_frame_mass_2": 29.0,
+    "coa_time": 1126259462.4,
+    "distance": 410.0,
+    "inclination": 0.0,
+    "right_ascension": 1.375,
+    "declination": -1.211,
+    "polarization_angle": 0.0,
+}
+background = {
+    "H1": TimeSeries(np.zeros(8192), t0=params["coa_time"] - 1.0, sample_rate=4096.0),
+}
+result = CBCSimulator("IMRPhenomD", waveform_backend=LALSimulationBackend()).simulate(
+    params,
+    ["H1"],
+    background,
+    sampling_frequency=4096.0,
+    minimum_frequency=20.0,
+)
+assert len(result["H1"]) == 8192
+"""
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(REPO_ROOT / "src")
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            check=False,
+            capture_output=True,
+            cwd=REPO_ROOT,
+            env=env,
+            text=True,
+        )
+        assert result.returncode == 0, result.stderr or result.stdout
 
 
 # ---------------------------------------------------------------------------
