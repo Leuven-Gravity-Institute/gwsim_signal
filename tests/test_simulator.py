@@ -11,9 +11,9 @@ from gwpy.timeseries import TimeSeries
 from pycbc.types import TimeSeries as PyCBCTimeSeries
 
 import gwmock_signal
-from gwmock_signal import CBCSimulator, GWSimulator
+from gwmock_signal import GWSimulator, register_simulator_backend, resolve_simulator_backend
 from gwmock_signal.multichannel.stack import DetectorStrainStack
-from gwmock_signal.simulator import TransientSimulator, _json_default
+from gwmock_signal.simulator import CBCSimulator, TransientSimulator, _json_default
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -339,6 +339,85 @@ class TestPublicImport:
     def test_cbc_simulator_importable_from_top_level(self):
         """CBCSimulator is reachable via gwmock_signal.CBCSimulator."""
         assert hasattr(gwmock_signal, "CBCSimulator")
+
+    def test_source_type_registry_helpers_importable_from_top_level(self):
+        """Source-type registry helpers are reachable via the top-level package."""
+        assert hasattr(gwmock_signal, "resolve_simulator_backend")
+        assert hasattr(gwmock_signal, "register_simulator_backend")
+        assert hasattr(gwmock_signal, "list_registered_source_types")
+
+
+class TestSourceTypeRegistry:
+    """Tests for public source-type backend resolution."""
+
+    @pytest.fixture(autouse=True)
+    def _isolate_source_type_registry(self):
+        import gwmock_signal.registry as registry_module
+
+        snapshot = dict(registry_module._SOURCE_TYPE_REGISTRY)
+        try:
+            yield
+        finally:
+            registry_module._SOURCE_TYPE_REGISTRY.clear()
+            registry_module._SOURCE_TYPE_REGISTRY.update(snapshot)
+
+    def test_resolve_bbh_without_importing_cbc_simulator_at_call_site(self):
+        """Downstream code can resolve the BBH backend without a direct CBC import."""
+        backend = resolve_simulator_backend("bbh")
+        assert issubclass(backend, GWSimulator)
+        assert backend.__name__ == "CBCSimulator"
+
+    def test_source_type_lookup_is_case_insensitive(self):
+        """Source-type normalization is lowercase and trims whitespace."""
+        assert resolve_simulator_backend("  BBH  ") is resolve_simulator_backend("bbh")
+
+    def test_list_registered_source_types_includes_bbh(self):
+        """The default public registry exposes the built-in BBH backend."""
+        assert "bbh" in gwmock_signal.list_registered_source_types()
+
+    def test_register_backend_allows_future_source_families_without_contract_change(self):
+        """Future source families extend the registry by registration alone."""
+
+        class _StubSimulator(GWSimulator):
+            @property
+            def required_params(self) -> frozenset[str]:
+                return frozenset()
+
+            def simulate(self, strain, params, detector) -> DetectorStrainStack:  # type: ignore[override]
+                raise NotImplementedError
+
+        register_simulator_backend("stochastic", _StubSimulator)
+
+        assert resolve_simulator_backend("stochastic") is _StubSimulator
+
+    def test_register_backend_rejects_conflicting_duplicate_mapping(self):
+        """A registered source type cannot be silently rebound to a different backend."""
+
+        class _FirstStub(GWSimulator):
+            @property
+            def required_params(self) -> frozenset[str]:
+                return frozenset()
+
+            def simulate(self, strain, params, detector) -> DetectorStrainStack:  # type: ignore[override]
+                raise NotImplementedError
+
+        class _SecondStub(GWSimulator):
+            @property
+            def required_params(self) -> frozenset[str]:
+                return frozenset()
+
+            def simulate(self, strain, params, detector) -> DetectorStrainStack:  # type: ignore[override]
+                raise NotImplementedError
+
+        register_simulator_backend("burst", _FirstStub)
+
+        with pytest.raises(ValueError, match="already registered"):
+            register_simulator_backend("burst", _SecondStub)
+
+    def test_resolve_unknown_source_type_raises_key_error(self):
+        """Unknown source types fail with a clear lookup error."""
+        with pytest.raises(KeyError, match="source_type='unknown'"):
+            resolve_simulator_backend("unknown")
 
 
 class TestJsonDefault:

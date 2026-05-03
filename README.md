@@ -116,6 +116,24 @@ python -c "import gwmock_signal; print(gwmock_signal.__version__)"
   stay in **API**
 - **API reference:** signatures, types, and exceptions (mkdocstrings)
 
+### Public source-type backend lookup
+
+`gwmock-signal` exposes a small public registry so downstream packages can
+resolve the signal backend from a gwmock-pop `source_type` string instead of
+hardcoding a concrete simulator class:
+
+```python
+from gwmock_signal import resolve_simulator_backend
+
+backend_cls = resolve_simulator_backend("bbh")
+simulator = backend_cls(waveform_model="IMRPhenomD")
+```
+
+The built-in compact-binary backend is registered under `bbh`. Future source
+families keep the same downstream lookup contract by registering a new
+`GWSimulator` subclass inside `gwmock-signal` with
+`register_simulator_backend(source_type, backend_cls)`.
+
 Build locally: `uv sync --extra docs && uv run zensical serve` (or
 `zensical build` for static output in `site/`).
 
