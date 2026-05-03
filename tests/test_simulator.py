@@ -12,7 +12,6 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 from gwpy.timeseries import TimeSeries
-from pycbc.types import TimeSeries as PyCBCTimeSeries
 
 import gwmock_signal
 from gwmock_signal import GWSimulator, register_simulator_backend, resolve_simulator_backend
@@ -299,6 +298,8 @@ class TestCBCSimulatorEndToEnd:
         response at the GW150914 sky position produces a non-zero projected strain,
         confirming that the projection/injection path actually modifies the data.
         """
+        from pycbc.types import TimeSeries as PyCBCTimeSeries
+
         tc = _MINIMAL_PARAMS["coa_time"]
         fs = 4096.0
         n = 256
