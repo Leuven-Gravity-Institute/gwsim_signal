@@ -34,7 +34,7 @@ site_url = "https://leuven-gravity-institute.github.io/gwmock-signal/"
 #
 # Read more: https://zensical.org/docs/setup/basics/#copyright
 copyright = """
-Copyright &copy; 2026 Isaac C. F. Wong
+Copyright &copy; 2026 Leuven Gravity Institute
 """
 
 # Zensical supports both implicit navigation and explicitly defined navigation.
