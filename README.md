@@ -33,11 +33,10 @@ pages for more details:
   Python 3.14 yet ([#825](https://git.ligo.org/lscsoft/lalsuite/-/issues/825))
 - Operating System: Linux, or macOS
 
-**Note:** The package is built and tested against Python 3.12-3.13. When
-creating a virtual environment with `uv`, specify the Python version to ensure
-compatibility: `uv venv --python 3.12` (replace `3.12` with your preferred
-version in the 3.12-3.14 range). This avoids potential issues with unsupported
-Python versions.
+**Note:** The package is built and tested against **Python 3.12 and 3.13**
+(`requires-python` is `>=3.12,<3.14`). When creating a virtual environment with
+`uv`, pin a supported interpreter, for example `uv venv --python 3.12`, so you
+do not accidentally pick an unsupported version.
 
 ### Install from PyPI
 
@@ -50,17 +49,13 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install gwmock-signal
 ```
 
-#### Optional Dependencies
+#### PyPI install scope
 
-For development or specific features:
-
-```bash
-# Development dependencies (testing, linting, etc.)
-uv pip install gwmock-signal[dev]
-
-# Documentation dependencies
-uv pip install gwmock-signal[docs]
-```
+The PyPI wheel includes **runtime dependencies only** (see `dependencies` in
+`pyproject.toml`). There are **no published optional extras** such as
+`gwmock-signal[dev]`; development and documentation dependencies are **uv
+dependency groups** used when you work from a **git clone** (see **Development
+installation** below).
 
 ### Install from Source
 
@@ -75,9 +70,9 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv sync
 ```
 
-#### Development Installation
+#### Development installation
 
-To set up for development:
+To set up for development (tests, linters, pre-commit):
 
 ```bash
 git clone git@github.com:Leuven-Gravity-Institute/gwmock-signal.git
@@ -86,22 +81,28 @@ cd gwmock-signal
 # Create a virtual environment (recommended with uv)
 uv venv --python 3.12
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv sync --extra dev
-
-# Install the commitlint dependencies
-npm ci
+uv sync --group dev
 
 # Install pre-commit hooks
 uv run pre-commit install
-uv run pre-commit install --hook-type commit-msg
+```
+
+To build or serve the documentation site locally:
+
+```bash
+uv sync --group docs
+uv run zensical serve
+# or: uv run zensical build  → static site under site/
 ```
 
 ### Verify Installation
 
-Check that `gwmock-signal` is installed correctly:
+Check that the CLI and import path work (console script **`gwmock-signal`**,
+Python package **`gwmock_signal`**):
 
 ```bash
 gwmock-signal --help
+gwmock-signal inject --help
 ```
 
 ```bash
@@ -112,8 +113,8 @@ python -c "import gwmock_signal; print(gwmock_signal.__version__)"
 
 - **Site:**
   [gwmock-signal documentation](https://leuven-gravity-institute.github.io/gwmock-signal/)
-- **User guide:** overview and **Examples** (use-case walkthroughs); API details
-  stay in **API**
+- **User guide:** overview, **Command-line interface** (`inject cbc`, JSON
+  parameters, `--network`), and **Examples** (library walkthroughs)
 - **API reference:** signatures, types, and exceptions (mkdocstrings)
 
 ### Public source-type backend lookup
@@ -134,8 +135,8 @@ families keep the same downstream lookup contract by registering a new
 `GWSimulator` subclass inside `gwmock-signal` with
 `register_simulator_backend(source_type, backend_cls)`.
 
-Build locally: `uv sync --extra docs && uv run zensical serve` (or
-`zensical build` for static output in `site/`).
+Build locally: `uv sync --group docs && uv run zensical serve` (or
+`uv run zensical build` for static output in `site/`).
 
 ## Contributing
 
@@ -156,7 +157,8 @@ for critical issues. Users can view upcoming changes in the draft release on the
 
 ## Testing
 
-Run the test suite:
+From a repository checkout with **dev** dependencies installed
+(`uv sync --group dev`):
 
 ```bash
 uv run pytest

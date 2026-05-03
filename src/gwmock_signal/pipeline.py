@@ -13,8 +13,8 @@
 #
 """High-level CBC injection pipeline.
 
-See ``docs/user_guide/cbc-pipeline.md`` (examples) and ``docs/api/pipeline/index.md``
-(API reference).
+See ``docs/user_guide/cli.md`` (CLI) and ``docs/api/pipeline/index.md`` (API
+reference).
 """
 
 from __future__ import annotations

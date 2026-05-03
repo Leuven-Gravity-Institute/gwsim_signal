@@ -30,7 +30,7 @@ from gwmock_signal.pipeline import inject_cbc_signal
 inject_app = typer.Typer(
     name="inject",
     help="Inject gravitational-wave signals into detector data. "
-    "See https://gwmock-signal.readthedocs.io for full documentation.",
+    "See https://leuven-gravity-institute.github.io/gwmock-signal/ for full documentation.",
 )
 
 
@@ -84,7 +84,7 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
     generates a zero-noise background, runs the injection pipeline, and
     either writes the result to an HDF5 file or prints a per-detector summary.
 
-    See https://gwmock-signal.readthedocs.io for full documentation.
+    See https://leuven-gravity-institute.github.io/gwmock-signal/ for full documentation.
     """
     # Load CBC parameters from JSON
     try:
