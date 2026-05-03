@@ -23,6 +23,10 @@ flowchart LR
     I --> M[Multichannel]
 ```
 
+**User guide → Command-line interface** documents the **`gwmock-signal`**
+console script (`inject cbc`, logging). Use it when you want a shell-first
+workflow; use the Python API when you are already inside a notebook or pipeline.
+
 Under **User guide → Examples** in the sidebar:
 
 1. **[Waveforms](waveform.md)** — Produce $h_{+}$, $h_{\times}$ with PyCBC;
@@ -38,12 +42,16 @@ Example pages are **narrative + copy-paste snippets**. **Authoritative API
 details** (signatures, types, exceptions) are only in **API** (auto-generated
 from docstrings):
 
-| Topic        | Examples (this site)                             | Reference (signatures & types)           |
-| ------------ | ------------------------------------------------ | ---------------------------------------- |
-| Waveforms    | [Waveforms](waveform.md)                         | [Waveform API](../api/waveform/)         |
-| Projection   | [Detector projection](detector-projection.md)    | [Projection API](../api/projection/)     |
-| Injection    | [Strain injection](strain-injection.md)          | [Injection API](../api/injection/)       |
-| Multichannel | [Multichannel strains](multi-channel-strains.md) | [Multichannel API](../api/multichannel/) |
+| Topic                               | Examples (this site)                                                                                                          | Reference (signatures & types)                                       |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Waveforms                           | [Waveforms](waveform.md)                                                                                                      | [Waveform API](../api/waveform/)                                     |
+| Projection                          | [Detector projection](detector-projection.md)                                                                                 | [Projection API](../api/projection/)                                 |
+| Injection                           | [Strain injection](strain-injection.md)                                                                                       | [Injection API](../api/injection/)                                   |
+| Multichannel                        | [Multichannel strains](multi-channel-strains.md)                                                                              | [Multichannel API](../api/multichannel/)                             |
+| CBC pipeline (Python)               | _(use strains + injection pages, or the CLI)_                                                                                 | [Pipeline API](../api/pipeline/), [Simulator API](../api/simulator/) |
+| gwmock-pop backends                 | [README](https://github.com/Leuven-Gravity-Institute/gwmock-signal/blob/main/README.md) (`resolve_simulator_backend` example) | [Registry API](../api/registry/)                                     |
+| Detector networks (presets / files) | [Command-line interface](cli.md) (`--network`)                                                                                | [Network API](../api/network/)                                       |
+| Shell / Typer CLI                   | [Command-line interface](cli.md)                                                                                              | _(no generated API page)_                                            |
 
 ## Prerequisites
 

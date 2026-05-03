@@ -40,8 +40,10 @@ MD036: false
 # Lists should be surrounded by blank lines
 MD032: true
 
-MD046:
-    style: fenced
+# pymdownx/Material admonitions (`!!! note`, `!!! tip`, …) indent the body;
+# MD046 misreads that as an indented code block. Fenced blocks are still the
+# norm everywhere else; this only silences that false positive.
+MD046: false
 
 # Disable only one top-level heading
 MD025: false

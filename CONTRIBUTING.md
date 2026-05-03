@@ -35,30 +35,21 @@ submitting a pull request—this guide will help you get started.
 
     ```shell
     # Create a virtual environment (recommended with uv)
-    uv venv --python 3.11
+    uv venv --python 3.12
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    uv sync --extra dev
+    uv sync --group dev
     ```
 
 4. Set Up Pre-commit Hooks and Commitlint
 
-    We use **pre-commit** to ensure code quality and consistency,
-    and **commitlint** to enforce commit message conventions.
+    We use **pre-commit** to ensure code quality and consistency.
     After installing dependencies, run:
 
     ```shell
     uv run pre-commit install
-    uv run  pre-commit install --hook-type commit-msg
     ```
 
     This ensures checks like code formatting, linting, and basic hygiene run automatically when you commit.
-
-    ```shell
-    npm ci
-    ```
-
-    The project includes a `commitlint.config.js` configuration file that defines the commit message rules.
-    Once installed, commitlint will automatically validate your commit messages when pre-commit runs.
 
 5. Create a New Branch
 
@@ -106,7 +97,8 @@ submitting a pull request—this guide will help you get started.
 ## Licensing
 
 By contributing, you agree that your contributions will be licensed under the
-project’s 3-Clause BSD License.
+same terms as the project: **GPL-3.0-or-later** (see the repository `LICENSE`
+file).
 
 ---
 

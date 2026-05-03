@@ -1,15 +1,18 @@
 ---
 title: Installation
-description: Install gwmock-signal with uv, optional extras, and verify the CLI.
+description:
+    Install gwmock-signal with uv, dependency groups from source, and verify the
+    CLI.
 ---
 
 # Installation
 
 We recommend using `uv` to manage virtual environments for installing
-`gwmock-signal` (import name `gwmock_signal`).
+`gwmock-signal` (PyPI distribution name, hyphen) and importing
+**`gwmock_signal`** (underscore) in Python.
 
-After install, continue with the [user guide overview](index.md) or
-[Quick Start](quick_start.md).
+After install, continue with the [user guide overview](index.md),
+[Quick Start](quick_start.md), or [Command-line interface](cli.md).
 
 If you don't have `uv` installed, you can install it with pip. See the project
 pages for more details:
@@ -21,21 +24,24 @@ pages for more details:
 
 ## Requirements
 
-- Python 3.12 or higher
-- Operating System: Linux, macOS, or Windows
+- **Python:** 3.12 or 3.13 (`requires-python` in `pyproject.toml` is
+  `>=3.12,<3.14`).
+- **Operating system:** Linux or macOS (same range as the published wheels and
+  CI).
 
 <!-- prettier-ignore-start -->
-!!!note
-    The package is built and tested against Python 3.12-3.14. When creating a virtual environment with `uv`,
-    specify the Python version to ensure compatibility:
-    `uv venv --python 3.12` (replace `3.12` with your preferred version in the 3.12-3.14 range).
-    This avoids potential issues with unsupported Python versions.
+
+!!! note "Python version pin"
+
+    When creating a virtual environment with `uv`, pass an explicit interpreter
+    (for example `uv venv --python 3.12`) so you do not pick an unsupported
+    Python from your machine default.
 
 <!-- prettier-ignore-end -->
 
 ## Install from PyPI
 
-The recommended way to install `gwmock_signal` is from PyPI:
+The recommended way to install the library for downstream use is from PyPI:
 
 ```bash
 # Create a virtual environment (recommended with uv)
@@ -44,85 +50,89 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install gwmock-signal
 ```
 
-### Optional Dependencies
+The wheel includes **runtime dependencies only** (`typer`, `gwpy`, `pycbc`,
+`pyyaml`, and their transitive installs). There are **no PyPI extras** such as
+`gwmock-signal[dev]`; tooling lives in **uv dependency groups** in the
+repository (see **Install from source**).
 
-For development or specific features:
+## Install from source
 
-```bash
-# Development dependencies (testing, linting, etc.)
-uv pip install gwmock-signal[dev]
-
-# Documentation dependencies
-uv pip install gwmock-signal[docs]
-
-# All dependencies
-uv pip install gwmock-signal[dev,docs]
-```
-
-## Install from Source
-
-For the latest development version:
+For the latest `main` branch:
 
 ```bash
-git clone git@github.com:Leuven-Gravity-Institute/gwmock_signal.git
-cd gwmock_signal
-# Create a virtual environment (recommended with uv)
+git clone git@github.com:Leuven-Gravity-Institute/gwmock-signal.git
+cd gwmock-signal
 uv venv --python 3.12
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv sync
 ```
 
-### Development Installation
+### Development dependencies
 
-To set up for development:
+From the repository root, install the `dev` group (pytest, ruff, pre-commit, …):
 
 ```bash
-git clone git@github.com:Leuven-Gravity-Institute/gwmock_signal.git
-cd gwmock_signal
+uv sync --group dev
+```
 
-# Create a virtual environment (recommended with uv)
+Documentation build tools (`zensical`, `mkdocstrings-python`):
+
+```bash
+uv sync --group docs
+```
+
+Multiple groups:
+
+```bash
+uv sync --group dev --group docs
+```
+
+### Development setup (full)
+
+Typical contributor workflow:
+
+```bash
+git clone git@github.com:Leuven-Gravity-Institute/gwmock-signal.git
+cd gwmock-signal
+
 uv venv --python 3.12
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv sync --extra dev
+uv sync --group dev
 
-# Install the commitlint dependencies
 npm ci
-
-# Install pre-commit hooks
 uv run pre-commit install
 uv run pre-commit install --hook-type commit-msg
 ```
 
-## Verify Installation
-
-Check that the package and CLI are available:
+## Verify installation
 
 ```bash
 gwmock-signal --help
+gwmock-signal inject --help
 ```
 
 ```bash
 python -c "import gwmock_signal; print(gwmock_signal.__version__)"
 ```
 
-## Dependencies
+## Dependencies (direct)
 
-### Core dependencies
+Declared in `pyproject.toml` for the library:
 
-- **numpy**: Numerical arrays
-- **gwpy**: `TimeSeries` and GW I/O conventions
-- **pycbc**: Waveforms, detector geometry, and related utilities
-- **typer**: CLI (`gwmock-signal` entry point)
+- **typer** — CLI (`gwmock-signal` entry point)
+- **gwpy** — `TimeSeries` / GW I/O conventions
+- **pycbc** — waveforms, detector geometry, and related utilities
+- **pyyaml** — configuration parsing where used
 
-## Getting Help
+Numerical arrays (`numpy`, etc.) are pulled in transitively by `gwpy` and
+`pycbc`.
+
+## Getting help
 
 <!-- prettier-ignore-start -->
 
 1. Check the [troubleshooting guide](../dev/troubleshooting.md)
-2. Search existing [issues](https://github.com/Leuven-Gravity-Institute/gwmock_signal/issues)
-3. Create a new issue with:
-    - Your operating system and Python version
-    - Full error message
-    - Steps to reproduce the problem
+2. Search existing [issues](https://github.com/Leuven-Gravity-Institute/gwmock-signal/issues)
+3. Open a new issue with your OS, Python version, full traceback, and minimal steps to reproduce
 
 <!-- prettier-ignore-end -->
