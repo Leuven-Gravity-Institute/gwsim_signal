@@ -59,7 +59,13 @@ class WaveformFactory:
             minimum_frequency: float,
             **params: Any,
         ) -> dict[str, TimeSeries]:
-            model_name = approximant or waveform_model or default_approximant
+            for supplied_name in (waveform_model, approximant):
+                if supplied_name is not None and supplied_name != default_approximant:
+                    raise ValueError(
+                        f"Registered model {default_approximant!r} cannot be called with conflicting "
+                        f"approximant {supplied_name!r}."
+                    )
+            model_name = default_approximant
             return self._backend.generate_td_waveform(
                 approximant=model_name,
                 tc=tc,
