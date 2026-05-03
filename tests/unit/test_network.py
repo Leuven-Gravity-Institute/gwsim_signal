@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import lal
 import pytest
 
 from gwmock_signal.network import _NETWORK_PRESETS, Network
@@ -71,23 +72,19 @@ class TestNetworkListNames:
 
 
 class TestNetworkProjection:
-    """Integration-style: ET-triangle codes are valid PyCBC detector codes."""
+    """Integration-style: ET-triangle codes are valid LAL detector codes."""
 
-    def test_et_triangle_passes_pycbc_detector_construction(self) -> None:
-        """Test that the ET-triangle network passes PyCBC detector construction."""
-        from pycbc.detector import Detector
-
+    def test_et_triangle_resolves_in_lal_cache(self) -> None:
+        """Test that the ET-triangle network resolves in the LAL detector cache."""
         net = Network.from_name("ET-triangle")
         for code in net.detector_names:
-            Detector(code)  # must not raise
+            assert code in lal.cached_detector_by_prefix
 
-    def test_et_l_passes_pycbc_detector_construction(self) -> None:
-        """Test that the ET-L network passes PyCBC detector construction."""
-        from pycbc.detector import Detector
-
+    def test_et_l_resolves_in_lal_cache(self) -> None:
+        """Test that the ET-L network resolves in the LAL detector cache."""
         net = Network.from_name("ET-L")
         for code in net.detector_names:
-            Detector(code)  # must not raise
+            assert code in lal.cached_detector_by_prefix
 
     def test_et_triangle_passes_through_project_polarizations_to_network(self) -> None:
         """ET-triangle codes produce valid strain output from the projection function."""
@@ -118,8 +115,8 @@ class TestNetworkProjection:
 class TestNetworkFromDetectors:
     """Tests for Network.from_detectors."""
 
-    def test_valid_pycbc_codes_accepted(self) -> None:
-        """from_detectors accepts any PyCBC-available code without hard-coding."""
+    def test_valid_lal_codes_accepted(self) -> None:
+        """from_detectors accepts any LAL-available code without hard-coding."""
         net = Network.from_detectors(["H1", "L1"])
         assert "H1" in net.detector_names
         assert "L1" in net.detector_names
@@ -135,8 +132,8 @@ class TestNetworkFromDetectors:
         assert net.name == "MyNetwork"
 
     def test_unknown_code_raises_value_error(self) -> None:
-        """A code not in PyCBC's runtime list raises ValueError."""
-        with pytest.raises(ValueError, match="Unknown PyCBC detector code"):
+        """A code not in LAL's runtime list raises ValueError."""
+        with pytest.raises(ValueError, match="Unknown LAL detector code"):
             Network.from_detectors(["NOT_A_REAL_CODE"])
 
     def test_empty_sequence_raises_value_error(self) -> None:
@@ -144,9 +141,9 @@ class TestNetworkFromDetectors:
         with pytest.raises(ValueError, match="detectors must be a non-empty sequence"):
             Network.from_detectors([])
 
-    def test_all_pycbc_codes_accepted(self) -> None:
-        """Every code in list_pycbc_detectors() can be used in from_detectors."""
-        for code in Network.list_pycbc_detectors():
+    def test_all_lal_codes_accepted(self) -> None:
+        """Every code in list_lal_detectors() can be used in from_detectors."""
+        for code in Network.list_lal_detectors():
             net = Network.from_detectors([code])
             assert code in net.detector_names
 
@@ -156,29 +153,29 @@ class TestNetworkFromDetectors:
         assert net.detector_names == ("V1",)
 
 
-class TestNetworkListPycbcDetectors:
-    """Tests for Network.list_pycbc_detectors."""
+class TestNetworkListLalDetectors:
+    """Tests for Network.list_lal_detectors."""
 
     def test_returns_sorted_list(self) -> None:
-        """list_pycbc_detectors() returns a sorted list."""
-        codes = Network.list_pycbc_detectors()
+        """list_lal_detectors() returns a sorted list."""
+        codes = Network.list_lal_detectors()
         assert codes == sorted(codes)
 
     def test_contains_standard_detectors(self) -> None:
         """Standard operational detectors are always present."""
-        codes = Network.list_pycbc_detectors()
+        codes = Network.list_lal_detectors()
         for expected in ("H1", "L1", "V1", "K1"):
-            assert expected in codes, f"{expected} missing from list_pycbc_detectors()"
+            assert expected in codes, f"{expected} missing from list_lal_detectors()"
 
     def test_contains_et_codes(self) -> None:
         """ET codes used in named presets are present."""
-        codes = Network.list_pycbc_detectors()
+        codes = Network.list_lal_detectors()
         for et in ("E0", "E1", "E2", "E3"):
-            assert et in codes, f"{et} missing from list_pycbc_detectors()"
+            assert et in codes, f"{et} missing from list_lal_detectors()"
 
     def test_returns_list_type(self) -> None:
         """Return type is a plain list."""
-        assert isinstance(Network.list_pycbc_detectors(), list)
+        assert isinstance(Network.list_lal_detectors(), list)
 
 
 class TestNetworkImport:

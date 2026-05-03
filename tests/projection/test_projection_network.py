@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
 from gwpy.timeseries import TimeSeries
+from pycbc.detector import Detector as PyCBCDetector
+from scipy.interpolate import interp1d
 
 from gwmock_signal.projection.network import project_polarizations_to_network
 
@@ -14,6 +16,43 @@ from gwmock_signal.projection.network import project_polarizations_to_network
 def _uniform_series(n: int = 128, fs: float = 4096.0, t0: float = 100.0) -> TimeSeries:
     t = np.arange(n) / fs + t0
     return TimeSeries(np.sin(2 * np.pi * 10.0 * t), t0=t0, sample_rate=fs)
+
+
+def _project_with_pycbc_reference(  # noqa: PLR0913
+    hp: TimeSeries,
+    hc: TimeSeries,
+    detector_names: list[str],
+    *,
+    right_ascension: float,
+    declination: float,
+    polarization_angle: float,
+) -> dict[str, np.ndarray]:
+    time_array = np.asarray(hp.times.value, dtype=float)
+    reference_time = float(0.5 * (time_array[0] + time_array[-1]))
+    time_array_wrt_reference = time_array - reference_time
+
+    interp_kind = "cubic" if len(time_array_wrt_reference) >= 4 else "linear"
+    hp_func = interp1d(time_array_wrt_reference, hp.value, kind=interp_kind, bounds_error=False, fill_value=0.0)
+    hc_func = interp1d(time_array_wrt_reference, hc.value, kind=interp_kind, bounds_error=False, fill_value=0.0)
+
+    strains: dict[str, np.ndarray] = {}
+    for name in detector_names:
+        detector = PyCBCDetector(name)
+        time_delay = detector.time_delay_from_earth_center(
+            right_ascension=right_ascension,
+            declination=declination,
+            t_gps=reference_time,
+        )
+        fp, fc = detector.antenna_pattern(
+            right_ascension=right_ascension,
+            declination=declination,
+            polarization=polarization_angle,
+            t_gps=reference_time,
+            polarization_type="tensor",
+        )
+        shifted_times = time_array_wrt_reference - time_delay
+        strains[name] = np.asarray(fp * hp_func(shifted_times) + fc * hc_func(shifted_times), dtype=float)
+    return strains
 
 
 def test_polarizations_not_a_mapping_raises_type_error() -> None:
@@ -123,25 +162,55 @@ def test_unknown_detector_name():
 
 @patch("gwmock_signal.projection.network._antenna_pattern_lal", return_value=(1.0, 0.0))
 @patch("gwmock_signal.projection.network._time_delay_from_earth_center_lal", return_value=0.0)
-@patch("gwmock_signal.projection.network.lalsimulation.DetectorPrefixToLALDetector")
-def test_delegates_to_lal(mock_detector_lookup, mock_time_delay, mock_antenna_pattern):
+def test_delegates_to_lal(mock_time_delay, mock_antenna_pattern):
     """Each built-in detector name resolves through the LAL detector path."""
-    mock_detector_lookup.return_value = MagicMock()
     t0 = 0.0
     fs = 8.0
     hp = TimeSeries(np.ones(8), t0=t0, sample_rate=fs)
     hc = TimeSeries(np.zeros(8), t0=t0, sample_rate=fs)
 
     names = ["H1", "L1"]
-    out = project_polarizations_to_network(
-        {"plus": hp, "cross": hc},
-        names,
-        right_ascension=0.1,
-        declination=0.2,
-        polarization_angle=0.3,
-        earth_rotation=False,
-    )
+    with patch.dict(
+        "gwmock_signal.projection.network.lal.cached_detector_by_prefix",
+        {"H1": object(), "L1": object()},
+        clear=False,
+    ):
+        out = project_polarizations_to_network(
+            {"plus": hp, "cross": hc},
+            names,
+            right_ascension=0.1,
+            declination=0.2,
+            polarization_angle=0.3,
+            earth_rotation=False,
+        )
     assert set(out) == set(names)
-    assert mock_detector_lookup.call_count == len(names)
     assert mock_time_delay.call_count == len(names)
     assert mock_antenna_pattern.call_count == len(names)
+
+
+def test_matches_pycbc_reference_on_gw150914_like_case() -> None:
+    """The direct-LAL projection path matches the previous PyCBC detector result."""
+    n = 1024
+    fs = 4096.0
+    t0 = 1126259462.4 - 0.125
+    times = np.arange(n) / fs
+    taper = np.hanning(n)
+    hp = TimeSeries(np.sin(2 * np.pi * 35.0 * times) * taper, t0=t0, sample_rate=fs)
+    hc = TimeSeries(np.cos(2 * np.pi * 35.0 * times) * taper, t0=t0, sample_rate=fs)
+
+    detector_names = ["H1", "L1", "V1"]
+    kwargs = {
+        "right_ascension": 1.375,
+        "declination": -1.211,
+        "polarization_angle": 0.0,
+    }
+    projected = project_polarizations_to_network(
+        {"plus": hp, "cross": hc},
+        detector_names,
+        earth_rotation=False,
+        **kwargs,
+    )
+    expected = _project_with_pycbc_reference(hp, hc, detector_names, **kwargs)
+
+    for name in detector_names:
+        np.testing.assert_allclose(projected[name].value, expected[name], rtol=1e-10, atol=1e-12)

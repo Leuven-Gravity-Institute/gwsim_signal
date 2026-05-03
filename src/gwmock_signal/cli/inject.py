@@ -45,8 +45,8 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
         typer.Option(
             "--network",
             help=(
-                "Named network preset (e.g. H1L1V1) or comma-separated PyCBC detector codes "
-                "(e.g. H1,L1,V1).  Any code from Network.list_pycbc_detectors() is accepted."
+                "Named network preset (e.g. H1L1V1) or comma-separated detector codes "
+                "(e.g. H1,L1,V1). Any code from Network.list_lal_detectors() is accepted."
             ),
         ),
     ],
@@ -114,7 +114,7 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
                 raise typer.BadParameter(
                     f"{exc}\n"
                     f"Named presets: {Network.list_names()}. "
-                    "Or pass comma-separated PyCBC codes, e.g. H1,L1,V1.",
+                    "Or pass comma-separated detector codes, e.g. H1,L1,V1.",
                     param_hint="--network",
                 ) from exc
 

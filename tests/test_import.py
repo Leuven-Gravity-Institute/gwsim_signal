@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import os
 import pkgutil
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -26,6 +30,31 @@ def test_import_main_package():
     """Test that the main gwmock_signal package can be imported."""
     assert hasattr(gwmock_signal, "__version__")
     assert gwmock_signal.__version__ is not None
+
+
+def test_import_main_package_without_pycbc() -> None:
+    """Importing the top-level package must not require PyCBC."""
+    repo_root = Path(__file__).resolve().parents[1]
+    code = """
+import builtins
+
+original_import = builtins.__import__
+
+def blocked_import(name, globals=None, locals=None, fromlist=(), level=0):
+    if name.startswith("pycbc"):
+        raise ModuleNotFoundError("No module named 'pycbc'")
+    return original_import(name, globals, locals, fromlist, level)
+
+builtins.__import__ = blocked_import
+
+import gwmock_signal
+
+assert hasattr(gwmock_signal, "__version__")
+"""
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(repo_root / "src")
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env, check=False)
+    assert result.returncode == 0, result.stderr
 
 
 @pytest.mark.parametrize("module_name", get_all_submodules(gwmock_signal))
