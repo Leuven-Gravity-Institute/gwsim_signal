@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/Leuven-Gravity-Institute/gwmock-signal/graph/badge.svg?token=COF8341N60)](https://codecov.io/gh/Leuven-Gravity-Institute/gwmock-signal)
 [![PyPI Version](https://img.shields.io/pypi/v/gwmock-signal)](https://pypi.org/project/gwmock-signal/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/gwmock-signal)](https://pypi.org/project/gwmock-signal/)
-[![License: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](LICENSE)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](LICENSE)
 [![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![DOI](https://zenodo.org/badge/1180014442.svg)](https://doi.org/10.5281/zenodo.19202406)
 [![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
@@ -164,8 +164,15 @@ uv run pytest
 
 ## License
 
-This project is licensed under the BSD 3-Clause License - see the
-[LICENSE](LICENSE) file for details.
+This project is licensed under **GPL-3.0-or-later**. See the [LICENSE](LICENSE)
+file for the full license text.
+
+### Downstream dependency note
+
+`gwmock-signal` should be treated as a **GPL-3.0-or-later** dependency by any
+downstream package that distributes it, including `gwmock`. In practice, that
+means `gwmock` may depend on `gwmock-signal` only if the resulting downstream
+distribution is compatible with GPL-3.0-or-later.
 
 ## Support
 
