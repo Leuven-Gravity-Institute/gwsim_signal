@@ -350,6 +350,17 @@ class TestPublicImport:
 class TestSourceTypeRegistry:
     """Tests for public source-type backend resolution."""
 
+    @pytest.fixture(autouse=True)
+    def _isolate_source_type_registry(self):
+        import gwmock_signal.registry as registry_module
+
+        snapshot = dict(registry_module._SOURCE_TYPE_REGISTRY)
+        try:
+            yield
+        finally:
+            registry_module._SOURCE_TYPE_REGISTRY.clear()
+            registry_module._SOURCE_TYPE_REGISTRY.update(snapshot)
+
     def test_resolve_bbh_without_importing_cbc_simulator_at_call_site(self):
         """Downstream code can resolve the BBH backend without a direct CBC import."""
         backend = resolve_simulator_backend("bbh")
