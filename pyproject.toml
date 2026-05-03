@@ -21,9 +21,12 @@ dynamic = ["version"]
 dependencies = [
   "typer>=0.25.0",
   "gwpy>=4.0.1",
-  "pycbc>=2.11.0",
+  "lalsuite>=7.26.10",
   "pyyaml>=6.0.3",
 ]
+
+[project.optional-dependencies]
+pycbc = ["pycbc>=2.11.0"]
 
 [dependency-groups]
 dev = [

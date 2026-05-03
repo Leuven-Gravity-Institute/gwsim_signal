@@ -2,20 +2,16 @@
 
 from __future__ import annotations
 
+import lalsimulation
 import numpy as np
 import pytest
 from gwpy.timeseries import TimeSeries
+from scipy.signal import correlate
 
-pycbc = pytest.importorskip("pycbc")
-
-from pycbc.detector import Detector  # noqa: E402
-from pycbc.filter import sigma as pycbc_sigma  # noqa: E402
-from pycbc.psd import from_string as psd_from_string  # noqa: E402
-from pycbc.types import TimeSeries as PyCBCTimeSeries  # noqa: E402
-from scipy.signal import correlate  # noqa: E402
-
-from gwmock_signal.network import Network  # noqa: E402
-from gwmock_signal.pipeline import inject_cbc_signal  # noqa: E402
+from gwmock_signal.network import Network
+from gwmock_signal.pipeline import inject_cbc_signal
+from gwmock_signal.projection.network import _time_delay_from_earth_center_lal
+from gwmock_signal.waveform.backends import LALSimulationBackend
 
 # ---------------------------------------------------------------------------
 # GW150914-like injection parameters
@@ -44,8 +40,10 @@ RA = PARAMS["right_ascension"]
 DEC = PARAMS["declination"]
 TC = PARAMS["coa_time"]
 
-# Reference matched-filter SNR for the H1 channel against the aLIGO design
-# sensitivity PSD (aLIGODesignSensitivityP1200087).
+# Historical PyCBC reference for the H1 matched-filter SNR against the aLIGO
+# design PSD (P1200087). The LAL-only regression keeps the same value to better
+# than 1e-6 relative precision.
+_PYCBC_REFERENCE_SNR = 4.884168e01
 _REFERENCE_SNR = 4.884168e01
 
 
@@ -63,6 +61,24 @@ def _make_background(detector_names: tuple[str, ...]) -> dict[str, TimeSeries]:
     n_samples = int((DURATION + POST_MERGER_PADDING) * FS)
     t0 = TC - DURATION
     return {name: TimeSeries(np.zeros(n_samples), t0=t0, sample_rate=FS) for name in detector_names}
+
+
+def _matched_filter_sigma_lal(ts: TimeSeries) -> float:
+    """Return the matched-filter sigma using the LAL design PSD helper."""
+    data = np.asarray(ts.value, dtype=float)
+    dt = float(ts.dt.value)
+    freqs = np.fft.rfftfreq(len(data), d=dt)
+    if len(freqs) < 2:
+        return 0.0
+    hf = np.fft.rfft(data) * dt
+    df = freqs[1] - freqs[0]
+    psd = np.array(
+        [lalsimulation.SimNoisePSDaLIGODesignSensitivityP1200087(float(f)) if f > 0 else np.inf for f in freqs],
+        dtype=float,
+    )
+    mask = freqs >= FMIN
+    sigma_sq = 4.0 * np.sum(np.abs(hf[mask]) ** 2 / psd[mask]) * df
+    return float(np.sqrt(sigma_sq))
 
 
 # ---------------------------------------------------------------------------
@@ -83,6 +99,7 @@ def test_cbc_h1l1v1_returns_stack():
         background,
         sampling_frequency=FS,
         minimum_frequency=FMIN,
+        waveform_backend=LALSimulationBackend(),
     )
 
     assert len(stack) == 3
@@ -104,6 +121,7 @@ def test_h1l1_time_delay_consistent():
         background,
         sampling_frequency=FS,
         minimum_frequency=FMIN,
+        waveform_backend=LALSimulationBackend(),
     )
 
     h1_values = stack["H1"].value
@@ -124,14 +142,24 @@ def test_h1l1_time_delay_consistent():
     search = slice(mid - 60, mid + 61)
     peak_lag_seconds = float(lags[search][np.argmax(cc[search])]) / FS
 
-    expected_delay = Detector("H1").time_delay_from_detector(Detector("L1"), RA, DEC, TC)
+    expected_delay = _time_delay_from_earth_center_lal(
+        "H1",
+        right_ascension=RA,
+        declination=DEC,
+        t_gps=TC,
+    ) - _time_delay_from_earth_center_lal(
+        "L1",
+        right_ascension=RA,
+        declination=DEC,
+        t_gps=TC,
+    )
 
     assert abs(peak_lag_seconds - expected_delay) <= 1.0 / FS
 
 
 @pytest.mark.integration
 def test_snr_regression():
-    """Matched-filter SNR on H1 channel matches hard-coded reference within 1%."""
+    """Matched-filter SNR on H1 channel matches the LAL-only regression reference."""
     detectors = Network.from_name("H1L1V1").detector_names
     background = _make_background(detectors)
 
@@ -142,20 +170,14 @@ def test_snr_regression():
         background,
         sampling_frequency=FS,
         minimum_frequency=FMIN,
+        waveform_backend=LALSimulationBackend(),
     )
 
-    h1_ts = stack["H1"]
-    h1_pycbc = PyCBCTimeSeries(
-        h1_ts.value.astype(float),
-        delta_t=1.0 / FS,
-        epoch=float(h1_ts.t0.value),
-    )
-    h1_fs = h1_pycbc.to_frequencyseries()
-    psd = psd_from_string("aLIGODesignSensitivityP1200087", len(h1_fs), h1_fs.delta_f, FMIN)
-    snr_computed = float(pycbc_sigma(h1_fs, psd=psd, low_frequency_cutoff=FMIN))
+    snr_computed = _matched_filter_sigma_lal(stack["H1"])
 
     assert _REFERENCE_SNR > 0.0, f"_REFERENCE_SNR is not set. Update it to {snr_computed:.6e} in this file."
-    assert abs(snr_computed - _REFERENCE_SNR) / _REFERENCE_SNR < 0.01
+    assert abs(_REFERENCE_SNR - _PYCBC_REFERENCE_SNR) / _PYCBC_REFERENCE_SNR < 1e-6
+    assert abs(snr_computed - _REFERENCE_SNR) / _REFERENCE_SNR < 1e-6
 
 
 @pytest.mark.integration
@@ -171,6 +193,7 @@ def test_cbc_et_triangle_returns_stack():
         background,
         sampling_frequency=FS,
         minimum_frequency=FMIN,
+        waveform_backend=LALSimulationBackend(),
     )
 
     assert len(stack) == 3

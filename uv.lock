@@ -570,9 +570,14 @@ name = "gwmock-signal"
 source = { editable = "." }
 dependencies = [
     { name = "gwpy" },
-    { name = "pycbc" },
+    { name = "lalsuite" },
     { name = "pyyaml" },
     { name = "typer" },
+]
+
+[package.optional-dependencies]
+pycbc = [
+    { name = "pycbc" },
 ]
 
 [package.dev-dependencies]
@@ -600,10 +605,12 @@ release = [
 [package.metadata]
 requires-dist = [
     { name = "gwpy", specifier = ">=4.0.1" },
-    { name = "pycbc", specifier = ">=2.11.0" },
+    { name = "lalsuite", specifier = ">=7.26.10" },
+    { name = "pycbc", marker = "extra == 'pycbc'", specifier = ">=2.11.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "typer", specifier = ">=0.25.0" },
 ]
+provides-extras = ["pycbc"]
 
 [package.metadata.requires-dev]
 build = [{ name = "hatch", specifier = ">=1.16.5" }]

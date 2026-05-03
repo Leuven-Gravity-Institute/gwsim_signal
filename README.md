@@ -52,10 +52,9 @@ uv pip install gwmock-signal
 #### PyPI install scope
 
 The PyPI wheel includes **runtime dependencies only** (see `dependencies` in
-`pyproject.toml`). There are **no published optional extras** such as
-`gwmock-signal[dev]`; development and documentation dependencies are **uv
-dependency groups** used when you work from a **git clone** (see **Development
-installation** below).
+`pyproject.toml`). The only published optional extra is `gwmock-signal[pycbc]`;
+development and documentation dependencies remain **uv dependency groups** used
+when you work from a **git clone** (see **Development installation** below).
 
 ### Install from Source
 
@@ -107,6 +106,27 @@ gwmock-signal inject --help
 
 ```bash
 python -c "import gwmock_signal; print(gwmock_signal.__version__)"
+```
+
+## Backends
+
+- `lal` (default): ships with the core install via `lalsuite` and supports the
+  built-in CBC pipeline without installing `pycbc`.
+- `pycbc` (optional): install with `pip install 'gwmock-signal[pycbc]'` to use
+  `PyCBCBackend`.
+
+Python API:
+
+```python
+from gwmock_signal import CBCSimulator, LALSimulationBackend
+
+sim = CBCSimulator("IMRPhenomD", waveform_backend=LALSimulationBackend())
+```
+
+CLI:
+
+```bash
+gwmock-signal inject cbc --params examples/gw150914_like.json --network H1L1V1 --backend lal
 ```
 
 ## Documentation

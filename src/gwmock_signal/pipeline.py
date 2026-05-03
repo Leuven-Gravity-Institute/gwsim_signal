@@ -27,6 +27,7 @@ from gwpy.timeseries import TimeSeries
 from gwmock_signal.detector import CustomDetector
 from gwmock_signal.multichannel.stack import DetectorStrainStack
 from gwmock_signal.simulator import CBCSimulator
+from gwmock_signal.waveform import WaveformBackend
 
 
 def inject_cbc_signal(  # noqa: PLR0913
@@ -37,6 +38,7 @@ def inject_cbc_signal(  # noqa: PLR0913
     *,
     sampling_frequency: float,
     minimum_frequency: float,
+    waveform_backend: WaveformBackend | None = None,
     earth_rotation: bool = True,
     interpolate_if_offset: bool = True,
 ) -> DetectorStrainStack:
@@ -47,7 +49,7 @@ def inject_cbc_signal(  # noqa: PLR0913
     ``DetectorStrainStack`` containing the injected strain for each detector.
 
     Args:
-        waveform_model: PyCBC time-domain approximant name (e.g. ``'IMRPhenomD'``).
+        waveform_model: Time-domain approximant name (e.g. ``'IMRPhenomD'``).
         params: CBC injection parameters; must include ``detector_frame_mass_1``,
             ``detector_frame_mass_2``, ``coa_time``, ``distance``, ``inclination``,
             ``right_ascension``, ``declination``, and ``polarization_angle``.
@@ -58,6 +60,9 @@ def inject_cbc_signal(  # noqa: PLR0913
         sampling_frequency: Sample rate in Hz.
         minimum_frequency: Low-frequency cutoff in Hz, passed to the waveform
             generator.
+        waveform_backend: Optional waveform backend instance used to generate
+            polarizations. Defaults to ``LALSimulationBackend`` via
+            ``CBCSimulator``.
         earth_rotation: If ``True``, evaluate antenna patterns at
             time-dependent GPS times (recommended for longer signals). If
             ``False``, use a single reference time at the segment midpoint.
@@ -71,10 +76,10 @@ def inject_cbc_signal(  # noqa: PLR0913
 
     Raises:
         ValueError: If any required parameter key is missing from ``params``.
-        ValueError: If a detector name is not recognized by PyCBC.
+        ValueError: If a detector name is not recognized by the detector registry.
         KeyError: If a detector name is missing from ``background``.
     """
-    return CBCSimulator(waveform_model=waveform_model).simulate(
+    return CBCSimulator(waveform_model=waveform_model, waveform_backend=waveform_backend).simulate(
         params,
         detector_names,
         background,

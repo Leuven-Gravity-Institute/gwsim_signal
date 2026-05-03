@@ -7,7 +7,6 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 from gwpy.timeseries import TimeSeries
-from pycbc.detector import Detector as PyCBCDetector
 from scipy.interpolate import interp1d
 
 from gwmock_signal.projection.network import project_polarizations_to_network
@@ -27,6 +26,9 @@ def _project_with_pycbc_reference(  # noqa: PLR0913
     declination: float,
     polarization_angle: float,
 ) -> dict[str, np.ndarray]:
+    pytest.importorskip("pycbc", reason="pycbc not installed")
+    from pycbc.detector import Detector as PyCBCDetector
+
     time_array = np.asarray(hp.times.value, dtype=float)
     reference_time = float(0.5 * (time_array[0] + time_array[-1]))
     time_array_wrt_reference = time_array - reference_time
