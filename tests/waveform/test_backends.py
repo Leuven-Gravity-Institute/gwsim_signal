@@ -89,5 +89,6 @@ assert LALSimulationBackend.__name__ == "LALSimulationBackend"
         cwd=REPO_ROOT,
         env=env,
         text=True,
+        timeout=30,
     )
     assert result.returncode == 0, result.stderr or result.stdout
