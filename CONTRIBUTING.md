@@ -78,7 +78,7 @@ submitting a pull request—this guide will help you get started.
 
     **Pull request guidelines:**
 
-    - Always use the provided [pull request template](.github/PULL_REQUEST_TEMPLATE/pull_request_template.md)
+    - Always use the provided [pull request template](.github/pull_request_template.md)
         and complete all relevant sections.
     - The pull request title must follow the Conventional Commits format, using the appropriate type prefix
         (for example, `feat:`, `fix:`, `docs:`, `refactor:`).

@@ -179,5 +179,5 @@ distribution is compatible with GPL-3.0-or-later.
 ## Support
 
 For questions or issues, please open an issue on
-[GitHub](https://github.com/Leuven-Gravity-Institute/gwmock-signal/issues/new)
+[GitHub](https://github.com/Leuven-Gravity-Institute/gwmock-signal/issues/new/choose)
 or contact the maintainers.
