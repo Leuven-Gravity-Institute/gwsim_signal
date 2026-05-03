@@ -19,7 +19,7 @@ icon: material/function-variant
 
 For **registry-based construction** (gwmock-pop `source_type` strings), see
 **[Registry](../registry/)**. For **one-shot CBC injection** without
-instantiating a simulator, see **[Pipeline](pipeline.md)**
+instantiating a simulator, see **[Pipeline](../pipeline/)**
 (`inject_cbc_signal`).
 
 For **narrative examples** (waveforms → projection → injection), see the
