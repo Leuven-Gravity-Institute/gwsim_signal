@@ -298,6 +298,7 @@ class TestCBCSimulatorEndToEnd:
         response at the GW150914 sky position produces a non-zero projected strain,
         confirming that the projection/injection path actually modifies the data.
         """
+        pytest.importorskip("pycbc", reason="pycbc not installed")
         from pycbc.types import TimeSeries as PyCBCTimeSeries
 
         tc = _MINIMAL_PARAMS["coa_time"]

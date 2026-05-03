@@ -20,7 +20,6 @@ import importlib
 from gwpy.timeseries import TimeSeries
 
 from gwmock_signal.waveform.backends.base import WaveformBackend, _pop_alias
-from gwmock_signal.waveform.pycbc_wrapper import pycbc_waveform_wrapper
 
 _PYCBC_IMPORT_ERROR = "pycbc is not installed. Run: pip install 'gwmock-signal[pycbc]'"
 
@@ -48,6 +47,7 @@ class PyCBCBackend(WaveformBackend):
         **params: object,
     ) -> dict[str, TimeSeries]:
         """Generate plus/cross polarizations through ``pycbc_waveform_wrapper``."""
+        pycbc_waveform_wrapper = importlib.import_module("gwmock_signal.waveform.pycbc_wrapper").pycbc_waveform_wrapper
         remaining = dict(params)
         translated = {
             "mass1": _pop_alias(remaining, "detector_frame_mass_1", "mass1"),

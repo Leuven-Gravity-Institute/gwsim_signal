@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from typer.testing import CliRunner
@@ -239,6 +240,72 @@ def test_inject_cbc_seed_accepted(params_file: Path) -> None:
         ],
     )
     assert result.exit_code == 0, result.output
+
+
+def test_inject_cbc_explicit_lal_backend_accepted(params_file: Path) -> None:
+    """--backend lal is accepted explicitly and the command succeeds."""
+    result = runner.invoke(
+        app,
+        [
+            "inject",
+            "cbc",
+            "--params",
+            str(params_file),
+            "--network",
+            "H1L1",
+            "--duration",
+            _DURATION,
+            "--sample-rate",
+            _SAMPLE_RATE,
+            "--f-min",
+            _F_MIN,
+            "--backend",
+            "lal",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+
+def test_inject_cbc_pycbc_backend_surfaces_install_hint(params_file: Path) -> None:
+    """--backend pycbc surfaces the optional-extra install hint on ImportError."""
+    with patch(
+        "gwmock_signal.cli.inject.PyCBCBackend",
+        side_effect=ImportError("pycbc is not installed. Run: pip install 'gwmock-signal[pycbc]'"),
+    ):
+        result = runner.invoke(
+            app,
+            [
+                "inject",
+                "cbc",
+                "--params",
+                str(params_file),
+                "--network",
+                "H1L1",
+                "--backend",
+                "pycbc",
+            ],
+        )
+    assert result.exit_code != 0
+    assert isinstance(result.exception, ImportError)
+    assert "gwmock-signal[pycbc]" in str(result.exception)
+
+
+def test_inject_cbc_invalid_backend(params_file: Path) -> None:
+    """--backend rejects values other than lal and pycbc."""
+    result = runner.invoke(
+        app,
+        [
+            "inject",
+            "cbc",
+            "--params",
+            str(params_file),
+            "--network",
+            "H1L1",
+            "--backend",
+            "not-a-backend",
+        ],
+    )
+    assert result.exit_code != 0
 
 
 def test_inject_cbc_invalid_sample_rate(params_file: Path) -> None:

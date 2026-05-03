@@ -15,9 +15,20 @@
 
 from __future__ import annotations
 
+from importlib import import_module
+
 from gwmock_signal.waveform.backends import LALSimulationBackend, PyCBCBackend, WaveformBackend
 from gwmock_signal.waveform.factory import WaveformFactory
-from gwmock_signal.waveform.pycbc_wrapper import pycbc_waveform_wrapper
+
+
+def __getattr__(name: str):
+    """Resolve optional waveform helpers lazily."""
+    if name == "pycbc_waveform_wrapper":
+        value = getattr(import_module("gwmock_signal.waveform.pycbc_wrapper"), name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "LALSimulationBackend",

@@ -26,6 +26,7 @@ from gwpy.timeseries import TimeSeries, TimeSeriesDict
 from gwmock_signal.detector import CustomDetector
 from gwmock_signal.network import Network
 from gwmock_signal.pipeline import inject_cbc_signal
+from gwmock_signal.waveform.backends import LALSimulationBackend, PyCBCBackend
 
 inject_app = typer.Typer(
     name="inject",
@@ -73,6 +74,10 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
         str,
         typer.Option("--approximant", help="PyCBC time-domain waveform approximant name."),
     ] = "IMRPhenomD",
+    backend: Annotated[
+        str,
+        typer.Option("--backend", help="Waveform backend: 'lal' (default) or 'pycbc'."),
+    ] = "lal",
     seed: Annotated[
         int | None,
         typer.Option("--seed", help="Optional integer random seed for reproducibility."),
@@ -128,6 +133,11 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
     if f_min <= 0:
         raise typer.BadParameter("--f-min must be > 0", param_hint="--f-min")
 
+    backend_name = backend.strip().lower()
+    if backend_name not in {"lal", "pycbc"}:
+        raise typer.BadParameter("--backend must be either 'lal' or 'pycbc'", param_hint="--backend")
+    waveform_backend = LALSimulationBackend() if backend_name == "lal" else PyCBCBackend()
+
     # Build zero-noise background centred on coa_time
     try:
         coa_time = float(cbc_params["coa_time"])
@@ -157,6 +167,7 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
         background=background,
         sampling_frequency=float(sample_rate),
         minimum_frequency=f_min,
+        waveform_backend=waveform_backend,
     )
 
     if output is not None:
