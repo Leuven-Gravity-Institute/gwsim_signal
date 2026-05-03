@@ -114,11 +114,11 @@ def _time_delay_from_earth_center_lal(
             -cosdec * np.sin(gha),
             np.sin(declination),
         ],
-        dtype=object,
+        dtype=float,
     )
     earth_center = np.array([0, 0, 0])
     baseline = earth_center - location
-    return float(baseline.dot(propagation_direction).astype(np.float64) / constants.c.value)
+    return float(np.dot(baseline, propagation_direction) / constants.c.value)
 
 
 def _antenna_pattern_lal(
@@ -145,7 +145,7 @@ def _antenna_pattern_lal(
             -cospsi * cosgha + sinpsi * singha * sindec,
             sinpsi * cosdec,
         ],
-        dtype=object,
+        dtype=float,
     )
     dx = response.dot(x)
 
@@ -155,7 +155,7 @@ def _antenna_pattern_lal(
             sinpsi * cosgha + cospsi * singha * sindec,
             cospsi * cosdec,
         ],
-        dtype=object,
+        dtype=float,
     )
     dy = response.dot(y)
 
