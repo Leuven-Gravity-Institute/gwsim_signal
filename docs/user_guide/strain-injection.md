@@ -33,7 +33,7 @@ for `inject_strain` / `inject_strains_sequential` are documented only under
 import numpy as np
 from gwpy.timeseries import TimeSeries
 
-from gwmock_signal.waveform import pycbc_waveform_wrapper
+from gwmock_signal.waveform import WaveformFactory
 from gwmock_signal.projection import project_polarizations_to_network
 from gwmock_signal.injection import inject_strain
 
@@ -44,15 +44,21 @@ n = int(duration * fs)
 
 target = TimeSeries(np.zeros(n), t0=t0, sample_rate=fs)
 
-pol = pycbc_waveform_wrapper(
-    tc=t0 + 2.0,
+factory = WaveformFactory()
+pol = factory.generate(
+    "IMRPhenomD",
+    {
+        "tc": t0 + 2.0,
+        "detector_frame_mass_1": 30.0,
+        "detector_frame_mass_2": 25.0,
+        "spin_1z": 0.0,
+        "spin_2z": 0.0,
+        "distance": 400.0,
+        "inclination": 0.0,
+        "coa_phase": 0.0,
+    },
     sampling_frequency=fs,
     minimum_frequency=20.0,
-    waveform_model="IMRPhenomD",
-    mass1=30.0,
-    mass2=25.0,
-    spin1z=0.0,
-    spin2z=0.0,
 )
 strains = project_polarizations_to_network(
     pol,

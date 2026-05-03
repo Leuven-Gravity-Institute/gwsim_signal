@@ -1,6 +1,6 @@
 ---
 title: Waveform
-description: Waveform generation API (pycbc_waveform_wrapper, WaveformFactory).
+description: Waveform backends, WaveformFactory registry, and PyCBC wrapper.
 icon: material/chart-bell-curve
 ---
 

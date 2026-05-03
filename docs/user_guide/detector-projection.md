@@ -31,19 +31,25 @@ and exceptions** for `project_polarizations_to_network` live exclusively in the
 ## Example 1 — Waveform then H1 / L1 / V1 projection
 
 ```python
-from gwmock_signal.waveform import pycbc_waveform_wrapper
+from gwmock_signal.waveform import WaveformFactory
 from gwmock_signal.projection import project_polarizations_to_network
 
 tc = 1_400_000_000.0
-pol = pycbc_waveform_wrapper(
-    tc=tc,
+factory = WaveformFactory()
+pol = factory.generate(
+    "IMRPhenomD",
+    {
+        "tc": tc,
+        "detector_frame_mass_1": 36.0,
+        "detector_frame_mass_2": 29.0,
+        "spin_1z": 0.0,
+        "spin_2z": 0.0,
+        "distance": 410.0,
+        "inclination": 0.0,
+        "coa_phase": 0.0,
+    },
     sampling_frequency=4096.0,
     minimum_frequency=20.0,
-    waveform_model="IMRPhenomD",
-    mass1=36.0,
-    mass2=29.0,
-    spin1z=0.0,
-    spin2z=0.0,
 )
 
 # Sky location and polarization (radians)
@@ -78,21 +84,14 @@ strains = project_polarizations_to_network(
 )
 ```
 
-## Example 3 — Custom detector list from configuration (advanced)
+## Example 3 — Custom detectors (advanced)
 
-Some analyses use custom **interferometer geometry** from `.interferometer`
-config files (e.g. Einstein Telescope configurations). Custom detector objects
-or config-path loading are **not** in the current release; when supported, they
-will appear in the **[Projection API](../api/projection/)** only.
-
-```python
-# Illustrative only — exact keyword names TBD in API reference.
-# strains = project_polarizations_to_network(
-#     pol,
-#     detector_names=["E1_Triangle_Sardinia"],
-#     ...
-# )
-```
+For observatories not in the built-in LAL cache, pass
+`gwmock_signal.detector.CustomDetector` instances (or load a YAML/JSON network
+with [`Network.from_file`](../api/network/)) and use the same
+`project_polarizations_to_network` call pattern as for `H1` / `L1` strings. See
+the **[Projection API](../api/projection/)** for the supported `detector_names`
+types.
 
 ## Parameter and units checklist
 

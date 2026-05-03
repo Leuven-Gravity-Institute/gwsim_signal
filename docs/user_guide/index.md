@@ -9,10 +9,10 @@ icon: material/book-open-page-variant
 # User guide
 
 **gwmock-signal** provides small, composable building blocks for **time-domain
-GW signal simulation** in Python, aligned with **PyCBC**, **GWpy**, and typical
-LIGO/Virgo/KAGRA analysis habits. The parent **gwmock** package (separate repo)
-is intended to orchestrate full mock-data challenges; this library focuses on
-the physics-adjacent primitives.
+GW signal simulation** in Python, aligned with **LALSimulation** / optional
+**PyCBC**, **GWpy**, and typical LIGO/Virgo/KAGRA analysis habits. The parent
+**gwmock** package (separate repo) is intended to orchestrate full mock-data
+challenges; this library focuses on the physics-adjacent primitives.
 
 ## Typical pipeline
 
@@ -29,8 +29,8 @@ workflow; use the Python API when you are already inside a notebook or pipeline.
 
 Under **User guide → Examples** in the sidebar:
 
-1. **[Waveforms](waveform.md)** — Produce $h_{+}$, $h_{\times}$ with PyCBC;
-   optional registry for custom models.
+1. **[Waveforms](waveform.md)** — Produce $h_{+}$, $h_{\times}$ via LAL
+   (default) or PyCBC (optional); registry for custom models.
 2. **[Detector projection](detector-projection.md)** — Map polarizations to each
    IFO strain using antenna patterns and delays.
 3. **[Strain injection](strain-injection.md)** — Add simulated strain into a
@@ -63,4 +63,3 @@ from docstrings):
 - [API overview](../api/index.md) — all reference sections
 - [Documentation home](../index.md)
 - [Contributing](../contributing.md)
-- Maintainer [project tracker](../dev/project-tracker.md) (roadmap and backlog)

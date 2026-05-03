@@ -72,7 +72,10 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
     ] = 16.0,
     approximant: Annotated[
         str,
-        typer.Option("--approximant", help="PyCBC time-domain waveform approximant name."),
+        typer.Option(
+            "--approximant",
+            help="Time-domain approximant name for the selected --backend (LAL or PyCBC list differs; see user guide).",
+        ),
     ] = "IMRPhenomD",
     backend: Annotated[
         str,
