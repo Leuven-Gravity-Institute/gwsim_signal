@@ -132,6 +132,11 @@ class CustomDetector:
         """
         if self._lal_detector is None:
             detector_prefix = self._lal_prefix
+            if detector_prefix in lal.cached_detector_by_prefix:
+                raise ValueError(
+                    f"Detector prefix {detector_prefix!r} is already registered in LAL; "
+                    "choose a unique prefix for CustomDetector."
+                )
             fr_detector = lal.FrDetector()
             fr_detector.name = self.name
             fr_detector.prefix = detector_prefix
