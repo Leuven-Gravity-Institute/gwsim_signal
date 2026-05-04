@@ -86,7 +86,7 @@ class ConstantBurstSimulator(GWSimulator):
                 name: TimeSeries(
                     np.asarray(background[name].value, dtype=float) + amplitude,
                     t0=float(background[name].t0.value),
-                    sample_rate=sampling_frequency,
+                    sample_rate=float(background[name].sample_rate.value),
                 )
                 for name in detector_names
             }
