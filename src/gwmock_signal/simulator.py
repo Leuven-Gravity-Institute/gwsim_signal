@@ -113,8 +113,9 @@ def _wrap_registered_waveform_backend(
 class GWSimulator(ABC):
     """Abstract base class for gravitational-wave signal simulators.
 
-    Defines the minimal source-agnostic contract: subclasses must implement
-    ``required_params`` and ``simulate``. ``_validate_params`` is provided as a
+    Defines the stable, source-agnostic contract used across packages:
+    subclasses must implement ``required_params`` and ``simulate`` and must
+    return a ``DetectorStrainStack``. ``_validate_params`` is provided as a
     concrete helper.
 
     See ``docs/api/simulator/index.md`` for the API reference.
@@ -125,7 +126,7 @@ class GWSimulator(ABC):
     def required_params(self) -> frozenset[str]:
         """Parameter keys that must be present in the params dict passed to ``simulate``."""
 
-    def _validate_params(self, params: dict[str, Any]) -> None:
+    def _validate_params(self, params: Mapping[str, Any]) -> None:
         """Raise ``ValueError`` naming any key in ``required_params`` missing from ``params``.
 
         Args:
@@ -139,26 +140,36 @@ class GWSimulator(ABC):
             raise ValueError(f"Missing required parameters: {sorted(missing)}")
 
     @abstractmethod
-    def simulate(
+    def simulate(  # noqa: PLR0913
         self,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         detector_names: Sequence[str],
-        background: Mapping[str, TimeSeries],
+        background: Mapping[str, TimeSeries] | None = None,
         *,
         sampling_frequency: float,
         minimum_frequency: float,
+        earth_rotation: bool = True,
+        interpolate_if_offset: bool = True,
     ) -> DetectorStrainStack:
-        """Simulate a gravitational-wave signal and return a ``DetectorStrainStack``.
+        """Return detector strain for one source realization as a ``DetectorStrainStack``.
 
         Args:
             params: Source parameters.
             detector_names: IFO codes (e.g. ``'H1'``, ``'L1'``, ``'V1'``).
-            background: Mapping of detector name to background ``TimeSeries``.
+            background: Optional mapping of detector name to existing background
+                strain. Non-transient subclasses may use this to inject into
+                pre-existing data; transient subclasses may ignore it and return
+                signal-only strain directly.
             sampling_frequency: Sample rate in Hz.
             minimum_frequency: Low-frequency cutoff in Hz.
+            earth_rotation: Optional backend-specific flag controlling whether
+                detector response should vary across the signal duration.
+            interpolate_if_offset: Optional backend-specific flag controlling
+                how off-grid injections should be handled.
 
         Returns:
-            ``DetectorStrainStack`` containing the simulated strain per detector.
+            ``DetectorStrainStack`` containing one aligned strain channel per
+            detector in ``detector_names`` order.
         """
 
 
@@ -176,7 +187,7 @@ class TransientSimulator(GWSimulator):
     @abstractmethod
     def generate_polarizations(
         self,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         sampling_frequency: float,
         minimum_frequency: float,
     ) -> tuple[TimeSeries, TimeSeries]:
@@ -238,9 +249,9 @@ class TransientSimulator(GWSimulator):
 
     def simulate(  # noqa: PLR0913
         self,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         detector_names: Sequence[str | CustomDetector],
-        background: Mapping[str, TimeSeries],
+        background: Mapping[str, TimeSeries] | None = None,
         *,
         sampling_frequency: float,
         minimum_frequency: float,
@@ -258,8 +269,9 @@ class TransientSimulator(GWSimulator):
                 plus ``right_ascension``, ``declination``, and ``polarization_angle``
                 for antenna-response projection.
             detector_names: IFO codes (e.g. ``'H1'``, ``'L1'``, ``'V1'``).
-            background: Mapping of detector name to background
-                ``TimeSeries`` (e.g. noise or zeros).
+            background: Optional mapping of detector name to background
+                ``TimeSeries`` (e.g. noise or zeros). If omitted, the projected
+                detector response is returned directly on the waveform time grid.
             sampling_frequency: Sample rate in Hz.
             minimum_frequency: Low-frequency cutoff in Hz.
             earth_rotation: If ``True``, evaluate antenna patterns at
@@ -269,8 +281,8 @@ class TransientSimulator(GWSimulator):
                 when its start is not on a target sample boundary.
 
         Returns:
-            ``DetectorStrainStack`` containing the injected strain for
-            each detector in ``detector_names`` order.
+            ``DetectorStrainStack`` containing the simulated strain for each
+            detector in ``detector_names`` order.
         """
         self._validate_params(params)
 
@@ -293,6 +305,8 @@ class TransientSimulator(GWSimulator):
             polarization_angle=params["polarization_angle"],
             earth_rotation=earth_rotation,
         )
+        if background is None:
+            return DetectorStrainStack.from_mapping(str_names, projected)
         injected = {
             name: inject_strain(
                 background[name],
@@ -360,7 +374,7 @@ class CBCSimulator(TransientSimulator):
 
     def generate_polarizations(
         self,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         sampling_frequency: float,
         minimum_frequency: float,
     ) -> tuple[TimeSeries, TimeSeries]:
@@ -396,7 +410,7 @@ class CBCSimulator(TransientSimulator):
     def write(  # noqa: PLR0913
         self,
         path: str | Path,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         detector_names: Sequence[str | CustomDetector],
         background: Mapping[str, TimeSeries],
         *,
@@ -439,6 +453,6 @@ class CBCSimulator(TransientSimulator):
         result.write(path, format=format)
 
         params_path = Path(path).with_name(Path(path).stem + "_params.json")
-        params_path.write_text(json.dumps(params, default=_json_default, indent=4))
+        params_path.write_text(json.dumps(dict(params), default=_json_default, indent=4))
 
         return result

@@ -51,6 +51,7 @@ nav = [
     { "Overview" = "user_guide/index.md" },
     { "Quick Start" = "user_guide/quick_start.md" },
     { "Command-line interface" = "user_guide/cli.md" },
+    { "Custom backends" = "user_guide/custom-backends.md" },
     { "Examples" = [
       { "Waveforms" = "user_guide/waveform.md" },
       { "Detector projection" = "user_guide/detector-projection.md" },

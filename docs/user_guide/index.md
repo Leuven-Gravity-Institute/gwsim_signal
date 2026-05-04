@@ -38,6 +38,11 @@ Under **User guide → Examples** in the sidebar:
 4. **[Multichannel strains](multi-channel-strains.md)** — Stack per-detector
    series in a fixed order for array-oriented code.
 
+For cross-package extensibility, see **[Custom backends](custom-backends.md)**.
+That page documents the stable
+`GWSimulator.simulate(...) -> DetectorStrainStack` contract used by downstream
+packages.
+
 Example pages are **narrative + copy-paste snippets**. **Authoritative API
 details** (signatures, types, exceptions) are only in **API** (auto-generated
 from docstrings):
@@ -49,6 +54,7 @@ from docstrings):
 | Injection                           | [Strain injection](strain-injection.md)                                                                                       | [Injection API](../api/injection/)                                   |
 | Multichannel                        | [Multichannel strains](multi-channel-strains.md)                                                                              | [Multichannel API](../api/multichannel/)                             |
 | CBC pipeline (Python)               | _(use strains + injection pages, or the CLI)_                                                                                 | [Pipeline API](../api/pipeline/), [Simulator API](../api/simulator/) |
+| Custom source backends              | [Custom backends](custom-backends.md)                                                                                         | [Simulator API](../api/simulator/), [Registry API](../api/registry/) |
 | gwmock-pop backends                 | [README](https://github.com/Leuven-Gravity-Institute/gwmock-signal/blob/main/README.md) (`resolve_simulator_backend` example) | [Registry API](../api/registry/)                                     |
 | Detector networks (presets / files) | [Command-line interface](cli.md) (`--network`)                                                                                | [Network API](../api/network/)                                       |
 | Shell / Typer CLI                   | [Command-line interface](cli.md)                                                                                              | _(no generated API page)_                                            |

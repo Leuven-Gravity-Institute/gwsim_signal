@@ -17,6 +17,11 @@ icon: material/function-variant
 
 <!-- prettier-ignore-end -->
 
+`GWSimulator.simulate(...)` is the stable cross-package boundary. Custom
+backends should accept the documented keyword arguments, may use
+`background=None` or inject into a provided background, and must return a
+[`DetectorStrainStack`](../multichannel/).
+
 For **registry-based construction** (gwmock-pop `source_type` strings), see
 **[Registry](../registry/)**. For **one-shot CBC injection** without
 instantiating a simulator, see **[Pipeline](../pipeline/)**
@@ -28,4 +33,5 @@ to inject a custom callable waveform without reaching into private
 `_waveform_factory` state.
 
 For **narrative examples** (waveforms → projection → injection), see the
-[user guide overview](../../user_guide/index.md).
+[user guide overview](../../user_guide/index.md). For an extensibility-oriented
+walkthrough, see [Custom backends](../../user_guide/custom-backends.md).

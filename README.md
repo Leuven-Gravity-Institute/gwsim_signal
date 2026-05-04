@@ -134,7 +134,8 @@ gwmock-signal inject cbc --params examples/gw150914_like.json --network H1L1V1 -
 - **Site:**
   [gwmock-signal documentation](https://leuven-gravity-institute.github.io/gwmock-signal/)
 - **User guide:** overview, **Command-line interface** (`inject cbc`, JSON
-  parameters, `--network`), and **Examples** (library walkthroughs)
+  parameters, `--network`), **Custom backends**, and **Examples** (library
+  walkthroughs)
 - **API reference:** signatures, types, and exceptions (mkdocstrings)
 
 ### Public source-type backend lookup
@@ -154,6 +155,11 @@ The built-in compact-binary backend is registered under `bbh`. Future source
 families keep the same downstream lookup contract by registering a new
 `GWSimulator` subclass inside `gwmock-signal` with
 `register_simulator_backend(source_type, backend_cls)`.
+
+The stable backend boundary is
+`GWSimulator.simulate(...) -> DetectorStrainStack`. For a minimal non-transient
+backend example, see
+[User guide → Custom backends](https://leuven-gravity-institute.github.io/gwmock-signal/user_guide/custom-backends/).
 
 Build locally: `uv sync --group docs && uv run zensical serve` (or
 `uv run zensical build` for static output in `site/`).
