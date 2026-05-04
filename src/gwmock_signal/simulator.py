@@ -187,7 +187,7 @@ class TransientSimulator(GWSimulator):
     @abstractmethod
     def generate_polarizations(
         self,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         sampling_frequency: float,
         minimum_frequency: float,
     ) -> tuple[TimeSeries, TimeSeries]:
@@ -249,7 +249,7 @@ class TransientSimulator(GWSimulator):
 
     def simulate(  # noqa: PLR0913
         self,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         detector_names: Sequence[str | CustomDetector],
         background: Mapping[str, TimeSeries] | None = None,
         *,
@@ -374,7 +374,7 @@ class CBCSimulator(TransientSimulator):
 
     def generate_polarizations(
         self,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         sampling_frequency: float,
         minimum_frequency: float,
     ) -> tuple[TimeSeries, TimeSeries]:
@@ -410,7 +410,7 @@ class CBCSimulator(TransientSimulator):
     def write(  # noqa: PLR0913
         self,
         path: str | Path,
-        params: dict[str, Any],
+        params: Mapping[str, Any],
         detector_names: Sequence[str | CustomDetector],
         background: Mapping[str, TimeSeries],
         *,
@@ -453,6 +453,6 @@ class CBCSimulator(TransientSimulator):
         result.write(path, format=format)
 
         params_path = Path(path).with_name(Path(path).stem + "_params.json")
-        params_path.write_text(json.dumps(params, default=_json_default, indent=4))
+        params_path.write_text(json.dumps(dict(params), default=_json_default, indent=4))
 
         return result
