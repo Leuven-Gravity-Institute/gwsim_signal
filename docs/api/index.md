@@ -29,7 +29,7 @@ tree (`src/gwmock_signal/`).
 | **[Pipeline](pipeline/)**         | `inject_cbc_signal` (CBC orchestration)                                                                |
 | **[Multichannel](multichannel/)** | `DetectorStrainStack`                                                                                  |
 | **[Network](network/)**           | `Network` (presets, `from_file`, detector lists)                                                       |
-| **[Simulator](simulator/)**       | `GWSimulator`, `TransientSimulator`, `CBCSimulator`                                                    |
+| **[Simulator](simulator/)**       | `GWSimulator`, `TransientSimulator`, `CBCSimulator`, stable `DetectorStrainStack` return contract      |
 | **[Registry](registry/)**         | `resolve_simulator_backend`, `register_simulator_backend`, `list_registered_source_types`              |
 | **[Utility](utils/)**             | Logging and other helpers                                                                              |
 
@@ -46,7 +46,8 @@ tree (`src/gwmock_signal/`).
 - **[Multichannel](multichannel/)** — Stacked IFO strains
   (`DetectorStrainStack`).
 - **[Network](network/)** — Named networks and YAML/JSON network configs.
-- **[Simulator](simulator/)** — Simulator base class and CBC implementation.
+- **[Simulator](simulator/)** — Simulator base class, CBC implementation, and
+  the stable `DetectorStrainStack` return contract.
 - **[Registry](registry/)** — Lookup `GWSimulator` subclasses by `source_type`
   string (for example `bbh`).
 - **[Utility](utils/)** — Utility functions.
