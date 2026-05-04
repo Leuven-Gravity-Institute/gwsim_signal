@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -40,6 +40,19 @@ _MINIMAL_PARAMS: dict = {
     "declination": -1.211,
     "polarization_angle": 0.0,
 }
+
+
+def _toy_registered_waveform(
+    *,
+    tc: float,
+    sampling_frequency: float,
+    waveform_model: str,
+    **_: object,
+) -> tuple[TimeSeries, TimeSeries]:
+    dt = 1.0 / sampling_frequency
+    hp = TimeSeries(np.ones(8), t0=tc, dt=dt, name=f"{waveform_model}-plus")
+    hc = TimeSeries(np.zeros(8), t0=tc, dt=dt, name=f"{waveform_model}-cross")
+    return hp, hc
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +172,72 @@ class TestCBCSimulatorRequiredParams:
         backend = LALSimulationBackend()
         CBCSimulator(waveform_model="IMRPhenomD", waveform_backend=backend)
         mock_factory_cls.assert_called_once_with(backend=backend)
+
+
+class TestRegisterWaveformModel:
+    """Tests for the public per-instance waveform registration hook."""
+
+    @staticmethod
+    def _make_simulator() -> CBCSimulator:
+        backend = MagicMock(spec=LALSimulationBackend)
+        backend.available_approximants.return_value = []
+        return CBCSimulator(waveform_model="toy_burst", waveform_backend=backend)
+
+    def test_register_waveform_model_allows_custom_callable(self) -> None:
+        """A registered callable waveform can be selected by ``waveform_model``."""
+        sim = self._make_simulator()
+
+        sim.register_waveform_model("toy_burst", _toy_registered_waveform)
+
+        hp, hc = sim.generate_polarizations(
+            _MINIMAL_PARAMS,
+            sampling_frequency=512.0,
+            minimum_frequency=20.0,
+        )
+
+        assert isinstance(hp, TimeSeries)
+        assert isinstance(hc, TimeSeries)
+        assert len(hp) == 8
+        assert len(hc) == 8
+        assert np.allclose(hp.value, 1.0)
+        assert np.allclose(hc.value, 0.0)
+
+    def test_register_waveform_model_reregister_same_factory_is_noop(self) -> None:
+        """Re-registering the same callable under the same name is harmless."""
+        sim = self._make_simulator()
+
+        sim.register_waveform_model("toy_burst", _toy_registered_waveform)
+        sim.register_waveform_model("toy_burst", _toy_registered_waveform)
+
+        hp, hc = sim.generate_polarizations(
+            _MINIMAL_PARAMS,
+            sampling_frequency=256.0,
+            minimum_frequency=20.0,
+        )
+
+        assert len(hp) == 8
+        assert len(hc) == 8
+
+    def test_register_waveform_model_conflicting_reregistration_raises(self) -> None:
+        """Reusing a name for a different factory raises ``ValueError``."""
+
+        def other_waveform(
+            *,
+            tc: float,
+            sampling_frequency: float,
+            waveform_model: str,
+            **_: object,
+        ) -> tuple[TimeSeries, TimeSeries]:
+            dt = 1.0 / sampling_frequency
+            hp = TimeSeries(np.full(8, 2.0), t0=tc, dt=dt, name=f"{waveform_model}-plus")
+            hc = TimeSeries(np.full(8, -1.0), t0=tc, dt=dt, name=f"{waveform_model}-cross")
+            return hp, hc
+
+        sim = self._make_simulator()
+        sim.register_waveform_model("toy_burst", _toy_registered_waveform)
+
+        with pytest.raises(ValueError, match="already registered"):
+            sim.register_waveform_model("toy_burst", other_waveform)
 
 
 class TestCBCSimulatorMissingParam:
