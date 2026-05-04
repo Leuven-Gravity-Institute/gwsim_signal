@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -34,6 +34,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("gwmock_signal.simulator")
 
+_POLARIZATION_COUNT = 2
+RegisteredWaveformOutput = dict[str, TimeSeries] | tuple[TimeSeries, TimeSeries]
+RegisteredWaveformFactory = Callable[..., RegisteredWaveformOutput] | WaveformBackend
+
 
 def _json_default(obj: Any) -> Any:
     """Convert NumPy types to Python natives for JSON serialization."""
@@ -42,6 +46,68 @@ def _json_default(obj: Any) -> Any:
     if hasattr(obj, "item"):  # NumPy scalar
         return obj.item()
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+
+def _normalize_registered_waveform_output(result: RegisteredWaveformOutput) -> dict[str, TimeSeries]:
+    """Return one ``{"plus": ..., "cross": ...}`` mapping for a registered model."""
+    if isinstance(result, tuple):
+        if len(result) != _POLARIZATION_COUNT:
+            raise TypeError("Registered waveform callables must return exactly two TimeSeries objects.")
+        plus, cross = result
+    elif isinstance(result, Mapping):
+        try:
+            plus = result["plus"]
+            cross = result["cross"]
+        except KeyError as exc:
+            raise ValueError("Registered waveform callables must return 'plus' and 'cross' entries.") from exc
+    else:
+        raise TypeError("Registered waveform callables must return a ('plus', 'cross') tuple or mapping.")
+
+    if not isinstance(plus, TimeSeries) or not isinstance(cross, TimeSeries):
+        raise TypeError("Registered waveform callables must return GWpy TimeSeries objects for both polarizations.")
+    return {"plus": plus, "cross": cross}
+
+
+def _wrap_registered_waveform_callable(
+    factory: Callable[..., RegisteredWaveformOutput],
+) -> Callable[..., dict[str, TimeSeries]]:
+    """Adapt one registered callable to the factory's ``{"plus", "cross"}`` contract."""
+
+    def _call_registered_waveform(**kwargs: Any) -> dict[str, TimeSeries]:
+        return _normalize_registered_waveform_output(factory(**kwargs))
+
+    return _call_registered_waveform
+
+
+def _wrap_registered_waveform_backend(
+    name: str,
+    backend: WaveformBackend,
+) -> Callable[..., dict[str, TimeSeries]]:
+    """Expose one backend approximant through ``WaveformFactory.register_model``."""
+
+    def _call_backend(
+        *,
+        waveform_model: str | None = None,
+        approximant: str | None = None,
+        tc: float,
+        sampling_frequency: float,
+        minimum_frequency: float,
+        **params: Any,
+    ) -> dict[str, TimeSeries]:
+        for supplied_name in (waveform_model, approximant):
+            if supplied_name is not None and supplied_name != name:
+                raise ValueError(
+                    f"Registered model {name!r} cannot be called with conflicting approximant {supplied_name!r}."
+                )
+        return backend.generate_td_waveform(
+            approximant=name,
+            tc=tc,
+            sampling_frequency=sampling_frequency,
+            minimum_frequency=minimum_frequency,
+            **params,
+        )
+
+    return _call_backend
 
 
 class GWSimulator(ABC):
@@ -101,8 +167,10 @@ class TransientSimulator(GWSimulator):
 
     Provides the concrete ``simulate`` method that orchestrates the full
     transient injection pipeline: validation → polarizations → detector
-    projection → strain injection → stacking.  Subclasses must implement
-    ``generate_polarizations`` and ``required_params``.
+    projection → strain injection → stacking. It also exposes
+    ``register_waveform_model`` so each simulator instance can add custom
+    waveform generators without poking private ``WaveformFactory`` attributes.
+    Subclasses must implement ``generate_polarizations`` and ``required_params``.
     """
 
     @abstractmethod
@@ -122,6 +190,51 @@ class TransientSimulator(GWSimulator):
         Returns:
             Tuple of ``(hp, hc)`` GWpy ``TimeSeries`` objects.
         """
+
+    def register_waveform_model(
+        self,
+        name: str,
+        factory: RegisteredWaveformFactory,
+    ) -> None:
+        """Register a one-shot waveform generator under ``name`` for this instance.
+
+        Re-registering the same name with an equal factory is a no-op. Reusing
+        the name for a different factory raises ``ValueError``.
+
+        Args:
+            name: Waveform model name used later as ``waveform_model``.
+            factory: Callable returning either ``(plus, cross)`` or a
+                ``{"plus": ..., "cross": ...}`` mapping, or a ``WaveformBackend``
+                whose ``generate_td_waveform`` method should serve that name.
+        """
+        if not hasattr(self, "_waveform_factory"):
+            raise AttributeError(
+                "TransientSimulator subclasses must initialize _waveform_factory before registering waveform models."
+            )
+
+        registered_factories = self.__dict__.setdefault("_registered_waveform_models", {})
+        if name in registered_factories:
+            if registered_factories[name] == factory:
+                return
+            raise ValueError(f"Waveform model {name!r} is already registered for this simulator instance.")
+
+        try:
+            self._waveform_factory.get_model(name)
+        except ValueError:
+            pass
+        else:
+            raise ValueError(f"Waveform model {name!r} is already registered for this simulator instance.")
+
+        if not isinstance(factory, WaveformBackend) and not callable(factory):
+            raise TypeError(f"Waveform model {name!r} must be registered with a callable or WaveformBackend.")
+
+        wrapped_factory = (
+            _wrap_registered_waveform_backend(name, factory)
+            if isinstance(factory, WaveformBackend)
+            else _wrap_registered_waveform_callable(factory)
+        )
+        self._waveform_factory.register_model(name, wrapped_factory)
+        registered_factories[name] = factory
 
     def simulate(  # noqa: PLR0913
         self,
