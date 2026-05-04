@@ -148,7 +148,7 @@ class GWSimulator(ABC):
         *,
         sampling_frequency: float,
         minimum_frequency: float,
-        earth_rotation: bool = False,
+        earth_rotation: bool = True,
         interpolate_if_offset: bool = True,
     ) -> DetectorStrainStack:
         """Return detector strain for one source realization as a ``DetectorStrainStack``.
@@ -255,7 +255,7 @@ class TransientSimulator(GWSimulator):
         *,
         sampling_frequency: float,
         minimum_frequency: float,
-        earth_rotation: bool = False,
+        earth_rotation: bool = True,
         interpolate_if_offset: bool = True,
     ) -> DetectorStrainStack:
         """Run the full injection pipeline and return a ``DetectorStrainStack``.
