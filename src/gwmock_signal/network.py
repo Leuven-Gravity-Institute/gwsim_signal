@@ -19,6 +19,7 @@ import json
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
+from importlib.resources import as_file, files
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -44,6 +45,18 @@ _NETWORK_PRESETS: dict[str, tuple[str, ...]] = {
     # Einstein Telescope L-shaped configuration
     "ET-L": ("E0",),
 }
+
+_FILE_BACKED_PRESET_ALIASES: dict[str, str] = {
+    "ET-Triangle-Sardinia": "et-triangle-sardinia.yaml",
+    "ET-Triangle-EMR": "et-triangle-emr.yaml",
+    "ET-2L-Aligned": "et-2l-aligned.yaml",
+    "ET-2L-Misaligned": "et-2l-misaligned.yaml",
+    # Compatibility aliases from the migration roadmap.
+    "ET-Sardinia": "et-triangle-sardinia.yaml",
+    "ET-EMR": "et-triangle-emr.yaml",
+}
+
+_PRESET_PACKAGE = "gwmock_signal.data.detectors"
 
 # Keys whose presence in an entry signals a full custom geometry rather than a
 # plain detector alias string.  Both *_deg and *_rad variants are included so that
@@ -105,6 +118,15 @@ def _load_data(path: Path) -> object:
         with path.open() as fh:
             return json.load(fh)
     raise ValueError(f"Unsupported file extension {path.suffix!r}. Supported extensions: .yaml, .yml, .json")
+
+
+def _preset_resource(alias: str):
+    """Return the importlib resource for one bundled detector preset."""
+    try:
+        resource_name = _FILE_BACKED_PRESET_ALIASES[alias]
+    except KeyError as exc:
+        raise ValueError(f"Unknown preset {alias!r}. Known presets: {sorted(_FILE_BACKED_PRESET_ALIASES)}") from exc
+    return files(_PRESET_PACKAGE).joinpath(resource_name)
 
 
 def list_lal_detectors() -> list[str]:
@@ -235,9 +257,37 @@ class Network:
         Raises:
             ValueError: If *alias* is not in the named presets.
         """
-        if alias not in _NETWORK_PRESETS:
-            raise ValueError(f"Unknown network {alias!r}. Known networks: {sorted(_NETWORK_PRESETS)}")
-        return cls(name=alias, detector_names=_NETWORK_PRESETS[alias])
+        if alias in _NETWORK_PRESETS:
+            return cls(name=alias, detector_names=_NETWORK_PRESETS[alias])
+        if alias in _FILE_BACKED_PRESET_ALIASES:
+            return cls.from_preset(alias)
+        raise ValueError(f"Unknown network {alias!r}. Known networks: {cls.list_names()}")
+
+    @classmethod
+    def from_preset(cls, alias: str) -> Network:
+        """Construct a :class:`Network` from a bundled YAML/JSON detector preset.
+
+        Bundled presets live under ``gwmock_signal.data.detectors`` and are
+        resolved with :mod:`importlib.resources`, so they work from source trees
+        and installed wheels alike.
+
+        Args:
+            alias: One of the bundled preset aliases returned by
+                :meth:`list_names`, for example ``"ET-Triangle-Sardinia"``.
+
+        Returns:
+            A :class:`Network` loaded from the packaged detector geometry file.
+
+        Raises:
+            ValueError: If *alias* does not map to a bundled preset file.
+            FileNotFoundError: If the mapped packaged preset file is missing.
+        """
+        resource = _preset_resource(alias)
+        if not resource.is_file():
+            raise FileNotFoundError(f"Bundled detector preset for {alias!r} is missing.")
+        with as_file(resource) as path:
+            net = cls.from_file(path)
+        return cls.from_detectors(net.detector_names, name=alias)
 
     @classmethod
     def from_file(cls, path: str | Path) -> Network:
@@ -309,8 +359,8 @@ class Network:
 
     @classmethod
     def list_names(cls) -> list[str]:
-        """Return a sorted list of all named network preset aliases."""
-        return sorted(_NETWORK_PRESETS.keys())
+        """Return a sorted list of all named network and bundled preset aliases."""
+        return sorted(set(_NETWORK_PRESETS) | set(_FILE_BACKED_PRESET_ALIASES))
 
     @classmethod
     def list_lal_detectors(cls) -> list[str]:

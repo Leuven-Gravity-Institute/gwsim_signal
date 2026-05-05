@@ -63,7 +63,7 @@ class TestNetworkListNames:
     def test_contains_all_expected_aliases(self) -> None:
         """Test that the list of names contains all expected aliases."""
         names = Network.list_names()
-        expected = {"H1L1", "H1L1V1", "HLVK", "ET-triangle", "ET-L"}
+        expected = {"H1L1", "H1L1V1", "HLVK", "ET-triangle", "ET-L", "ET-Triangle-Sardinia", "ET-Sardinia"}
         assert expected.issubset(set(names))
 
     def test_returns_at_least_five_aliases(self) -> None:
