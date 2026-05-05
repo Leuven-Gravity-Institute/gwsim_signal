@@ -82,7 +82,7 @@ assert LALSimulationBackend.__name__ == "LALSimulationBackend"
 """
     env = os.environ.copy()
     env["PYTHONPATH"] = str(REPO_ROOT / "src")
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, "-c", code],
         check=False,
         capture_output=True,
