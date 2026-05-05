@@ -57,7 +57,7 @@ def test_interferometer_config_to_custom_detector_matches_golden_fixture(fixture
 
 def test_read_interferometer_config_ignores_psd_line() -> None:
     """The raw reader keeps scalar parameters and skips the PSD constructor line."""
-    fixture_path = _FIXTURES[0]
+    fixture_path = next(p for p in _FIXTURES if _read_fixture_assignments(p).get("name") == "E1_2L_aligned_sardinia")
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
