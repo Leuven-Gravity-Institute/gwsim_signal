@@ -117,7 +117,9 @@ def _load_data(path: Path) -> object:
     if suffix == ".json":
         with path.open() as fh:
             return json.load(fh)
-    raise ValueError(f"Unsupported file extension {path.suffix!r}. Supported extensions: .yaml, .yml, .json")
+    raise ValueError(
+        f"Unsupported file extension {path.suffix!r}. Supported extensions: .yaml, .yml, .json, .interferometer"
+    )
 
 
 def _preset_resource(alias: str):
@@ -291,13 +293,17 @@ class Network:
 
     @classmethod
     def from_file(cls, path: str | Path) -> Network:
-        """Load a :class:`Network` from a YAML or JSON config file.
+        """Load a :class:`Network` from a YAML, JSON, or deprecated ``.interferometer`` file.
 
         The file must have a top-level ``name`` key (str) and a ``detectors``
         key containing a non-empty list of detector entries.  Each entry must
         have a ``name`` field. If any geometry key is present a
         :class:`~gwmock_signal.detector.CustomDetector` is constructed;
         otherwise the name is treated as a plain LAL detector code string.
+
+        ``.interferometer`` files are treated as Bilby compatibility shims for
+        a single custom detector and emit a :class:`DeprecationWarning`. Migrate
+        those files to the YAML detector preset/network format instead.
 
         **Angle conventions** — every angle parameter accepts either a degrees
         variant (``*_deg``) or a radians variant (``*_rad``), but *not both* for
@@ -318,7 +324,8 @@ class Network:
         when absent.
 
         Args:
-            path: Path to a ``.yaml``, ``.yml``, or ``.json`` file.
+            path: Path to a ``.yaml``, ``.yml``, ``.json``, or
+                deprecated ``.interferometer`` file.
 
         Returns:
             A :class:`Network` whose ``detector_names`` contains str entries
@@ -332,6 +339,12 @@ class Network:
                 the same angle, or a geometry value is out of range.
         """
         path = Path(path)
+        if path.suffix.lower() == ".interferometer":
+            from gwmock_signal.io.interferometer_format import interferometer_config_to_custom_detector  # noqa: PLC0415
+
+            detector = interferometer_config_to_custom_detector(path)
+            return cls.from_detectors((detector,), name=detector.name)
+
         data = _load_data(path)
 
         if not isinstance(data, dict):
