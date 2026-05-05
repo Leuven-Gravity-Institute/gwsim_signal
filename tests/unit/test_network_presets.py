@@ -86,7 +86,7 @@ def test_from_name_supports_compatibility_alias() -> None:
     """Roadmap compatibility aliases resolve to the bundled preset geometry."""
     canonical = Network.from_preset("ET-Triangle-Sardinia")
     alias = Network.from_name("ET-Sardinia")
-    assert alias.name == "ET-Sardinia"
+    assert alias.name == canonical.name
     assert alias.detector_names == canonical.detector_names
 
 

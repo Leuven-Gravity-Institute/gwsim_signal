@@ -287,7 +287,7 @@ class Network:
             raise FileNotFoundError(f"Bundled detector preset for {alias!r} is missing.")
         with as_file(resource) as path:
             net = cls.from_file(path)
-        return cls.from_detectors(net.detector_names, name=alias)
+        return cls.from_detectors(net.detector_names, name=net.name)
 
     @classmethod
     def from_file(cls, path: str | Path) -> Network:
