@@ -79,6 +79,16 @@ The value is resolved in order:
 3. If that fails, it is split on commas and interpreted as PyCBC detector codes
    (for example `H1,L1,V1`).
 
+Bundled named presets include:
+
+| Preset                                          | Detectors                                         |
+| ----------------------------------------------- | ------------------------------------------------- |
+| `H1L1`, `H1L1V1`, `HLVK`, `ET-triangle`, `ET-L` | Built-in LAL detector-code groups                 |
+| `ET-Triangle-Sardinia` (`ET-Sardinia`)          | `ET1_SARD`, `ET2_SARD`, `ET3_SARD`                |
+| `ET-Triangle-EMR` (`ET-EMR`)                    | `ET1_EMR`, `ET2_EMR`, `ET3_EMR`                   |
+| `ET-2L-Aligned`                                 | `ET1_2L_ALIGNED_SARD`, `ET2_2L_ALIGNED_EMR`       |
+| `ET-2L-Misaligned`                              | `ET1_2L_MISALIGNED_SARD`, `ET2_2L_MISALIGNED_EMR` |
+
 ### Output (`--output`)
 
 - If **`--output` is set**: strains are written as GWpy **`TimeSeriesDict`**

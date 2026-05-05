@@ -30,7 +30,6 @@ pycbc = ["pycbc>=2.11.0"]
 
 [dependency-groups]
 dev = [
-  "bandit[toml]>=1.9.4",
   "ruff>=0.15.12",
   "pre-commit>=4.6.0",
   "pytest-cov>=7.1.0",
@@ -106,6 +105,7 @@ lint.extend-select = [
   "T10", # Debugger statements
   "DOC", # Docstring
   "D",   # Doc style
+  "S",   # Security
 ]
 lint.ignore = [
   "E501", # Line length (handled by formatter)

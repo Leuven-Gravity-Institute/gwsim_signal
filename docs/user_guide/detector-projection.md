@@ -88,7 +88,8 @@ strains = project_polarizations_to_network(
 
 For observatories not in the built-in LAL cache, pass
 `gwmock_signal.detector.CustomDetector` instances (or load a YAML/JSON network
-with [`Network.from_file`](../api/network/)) and use the same
+with [`Network.from_file`](../api/network/) or a bundled ET preset such as
+`Network.from_preset("ET-Triangle-Sardinia")`) and use the same
 `project_polarizations_to_network` call pattern as for `H1` / `L1` strings. See
 the **[Projection API](../api/projection/)** for the supported `detector_names`
 types.

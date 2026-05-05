@@ -53,7 +53,7 @@ assert hasattr(gwmock_signal, "__version__")
 """
     env = os.environ.copy()
     env["PYTHONPATH"] = str(repo_root / "src")
-    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env, check=False)
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env, check=False)  # noqa: S603
     assert result.returncode == 0, result.stderr
 
 

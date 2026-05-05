@@ -20,3 +20,10 @@ icon: material/transit-connection-variant
 Used by the **[command-line interface](../../user_guide/cli.md)** (`--network`)
 and by library workflows that need named IFO sets. For antenna-pattern
 projection of $h_{+}$, $h_{\times}$, see **[Projection](../projection/)**.
+
+Bundled detector-geometry presets currently include:
+
+- `ET-Triangle-Sardinia` (compatibility alias: `ET-Sardinia`)
+- `ET-Triangle-EMR` (compatibility alias: `ET-EMR`)
+- `ET-2L-Aligned`
+- `ET-2L-Misaligned`
