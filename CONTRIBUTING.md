@@ -40,13 +40,13 @@ submitting a pull request—this guide will help you get started.
     uv sync --group dev
     ```
 
-4. Set Up Pre-commit Hooks and Commitlint
+4. Set Up Pre-commit Hooks
 
     We use **pre-commit** to ensure code quality and consistency.
     After installing dependencies, run:
 
     ```shell
-    uv run pre-commit install
+    uv run prek install
     ```
 
     This ensures checks like code formatting, linting, and basic hygiene run automatically when you commit.

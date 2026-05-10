@@ -31,7 +31,7 @@ pycbc = ["pycbc>=2.11.0"]
 [dependency-groups]
 dev = [
   "ruff>=0.15.12",
-  "pre-commit>=4.6.0",
+  "prek>=0.3.13",
   "pytest-cov>=7.1.0",
   "pytest-mock>=3.15.1",
   "pytest-runner>=6.0.1",
@@ -57,12 +57,6 @@ source = "vcs"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gwmock_signal"]
-
-[tool.bandit]
-exclude_dirs = ["build", "dist", "tests", "scripts"]
-number = 4
-recursive = true
-targets = "src"
 
 [tool.coverage.run]
 branch = true

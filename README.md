@@ -83,7 +83,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv sync --group dev
 
 # Install pre-commit hooks
-uv run pre-commit install
+uv run prek install
 ```
 
 To build or serve the documentation site locally:
