@@ -32,9 +32,9 @@ rules, and method contracts** are documented only under
 ```python
 import numpy as np
 
+from gwmock_signal import DetectorStrainStack
 from gwmock_signal.waveform import WaveformFactory
 from gwmock_signal.projection import project_polarizations_to_network
-from gwmock_signal.multichannel import DetectorStrainStack
 
 names = ["H1", "L1", "V1"]
 factory = WaveformFactory()
@@ -66,6 +66,11 @@ stack = DetectorStrainStack.from_mapping(names, strains)
 arr = stack.data
 assert arr.shape == (len(names), len(strains["H1"]))
 print(np.max(np.abs(arr)))
+
+# Inspect stack properties
+print(stack.t0)              # GPS start time (same for all channels)
+print(stack.sample_rate)     # Sample rate as GWpy Quantity
+print(stack.detector_names)  # ('H1', 'L1', 'V1')
 ```
 
 ## Example 2 — Index by name, export one channel
@@ -80,6 +85,32 @@ assert h1_series is stack[0]  # same order as names
 ```python
 again = stack.to_dict()
 assert set(again) == set(names)
+```
+
+## Example 4 — Save and reload a stack
+
+Write the stack to an HDF5 file (the default format) and read it back:
+
+```python
+# Save
+stack.write("my_injection.h5", format="hdf5")
+
+# Reload — detector order is preserved
+reloaded = DetectorStrainStack.read("my_injection.h5", format="hdf5")
+assert reloaded.detector_names == stack.detector_names
+```
+
+Available write formats: `"hdf5"` (default), `"npy"` (+ JSON sidecar), `"gwf"`,
+`"txt"`. Read formats: `"hdf5"`, `"npy"`.
+
+## Example 5 — Write with NPY format
+
+```python
+# Writes my_injection.npy and my_injection.json (sidecar with metadata)
+stack.write("my_injection.npy", format="npy")
+
+# Read back
+reloaded = DetectorStrainStack.read("my_injection.npy", format="npy")
 ```
 
 ## Pitfalls

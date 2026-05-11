@@ -81,30 +81,42 @@ The value is resolved in order:
 
 Bundled named presets include:
 
-| Preset                                          | Detectors                                         |
-| ----------------------------------------------- | ------------------------------------------------- |
-| `H1L1`, `H1L1V1`, `HLVK`, `ET-triangle`, `ET-L` | Built-in LAL detector-code groups                 |
-| `ET-Triangle-Sardinia` (`ET-Sardinia`)          | `ET1_SARD`, `ET2_SARD`, `ET3_SARD`                |
-| `ET-Triangle-EMR` (`ET-EMR`)                    | `ET1_EMR`, `ET2_EMR`, `ET3_EMR`                   |
-| `ET-2L-Aligned`                                 | `ET1_2L_ALIGNED_SARD`, `ET2_2L_ALIGNED_EMR`       |
-| `ET-2L-Misaligned`                              | `ET1_2L_MISALIGNED_SARD`, `ET2_2L_MISALIGNED_EMR` |
+| Preset                   | Detectors                                         |
+| ------------------------ | ------------------------------------------------- |
+| `H1L1`, `H1L1V1`, `HLVK` | Built-in LAL detector-code groups                 |
+| `ET-triangle`, `ET-L`    | Built-in LAL detector-code groups                 |
+| `ET-Triangle-Sardinia`   | `ET1_SARD`, `ET2_SARD`, `ET3_SARD`                |
+| `ET-Sardinia` (alias)    | Same as `ET-Triangle-Sardinia`                    |
+| `ET-Triangle-EMR`        | `ET1_EMR`, `ET2_EMR`, `ET3_EMR`                   |
+| `ET-EMR` (alias)         | Same as `ET-Triangle-EMR`                         |
+| `ET-2L-Aligned`          | `ET1_2L_ALIGNED_SARD`, `ET2_2L_ALIGNED_EMR`       |
+| `ET-2L-Misaligned`       | `ET1_2L_MISALIGNED_SARD`, `ET2_2L_MISALIGNED_EMR` |
 
 ### Output (`--output`)
 
 - If **`--output` is set**: strains are written as GWpy **`TimeSeriesDict`**
   HDF5 (one dataset per detector).
-- If **omitted**: one line per detector is printed to stdout (RMS and duration).
+- If **omitted**: one line per detector is printed to stdout showing RMS strain
+  and duration. Example output:
+
+```text
+H1  rms=1.2345e-21  duration=16.0s
+L1  rms=1.1132e-21  duration=16.0s
+V1  rms=8.7621e-22  duration=16.0s
+```
 
 ### Other flags
 
-| Flag            |    Default | Role                                                           |
-| --------------- | ---------: | -------------------------------------------------------------- |
-| `--sample-rate` |       4096 | Sample rate (Hz) of the synthetic background                   |
-| `--f-min`       |         20 | Low-frequency cutoff (Hz) for waveform generation              |
-| `--duration`    |         16 | Length (seconds) of the zero background; centred on `coa_time` |
-| `--approximant` | IMRPhenomD | Time-domain approximant string for the active `--backend`      |
-| `--backend`     |        lal | Waveform engine: `lal` (LALSimulation, default) or `pycbc`     |
-| `--seed`        |   _(none)_ | Optional `numpy` random seed before building data              |
+| Flag                                                     |    Default | Role                                                                 |
+| -------------------------------------------------------- | ---------: | -------------------------------------------------------------------- |
+| `--sample-rate`                                          |       4096 | Sample rate (Hz) of the synthetic background (integer)               |
+| `--f-min`                                                |         20 | Low-frequency cutoff (Hz) for waveform generation                    |
+| `--duration`                                             |         16 | Length (seconds) of zero background; centred on `coa_time`           |
+| `--approximant`                                          | IMRPhenomD | Time-domain approximant string for the active `--backend`            |
+| `--backend`                                              |        lal | Waveform engine: `lal` (LALSimulation, default) or `pycbc`           |
+| `--seed`                                                 |   _(none)_ | Optional integer seed passed to `numpy.random.seed`                  |
+| `--earth-rotation` / `--no-earth-rotation`               |       true | Enable time-dependent antenna patterns (disable for short waveforms) |
+| `--interpolate-if-offset` / `--no-interpolate-if-offset` |       true | Enable cubic resampling when injection is off-grid                   |
 
 ### Example
 
@@ -117,8 +129,8 @@ gwmock-signal inject cbc --params cbc.json --network H1L1V1 --output injected.h5
 Use the **CLI** for quick checks and scripted runs from the shell. Use the
 **Python API** when you already have `TimeSeries` / `TimeSeriesDict` data,
 custom backgrounds, or need `inject_cbc_signal` / `CBCSimulator` options such as
-`earth_rotation` and `interpolate_if_offset` (see
-**[Pipeline API](../api/pipeline/)** and
+custom `earth_rotation` and `interpolate_if_offset` tuning beyond the boolean
+CLI flags (see **[Pipeline API](../api/pipeline/)** and
 **[Simulator API](../api/simulator/)**).
 
 ## See also

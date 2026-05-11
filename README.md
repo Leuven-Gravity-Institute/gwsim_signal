@@ -121,6 +121,10 @@ Python API:
 from gwmock_signal import CBCSimulator, LALSimulationBackend
 
 sim = CBCSimulator("IMRPhenomD", waveform_backend=LALSimulationBackend())
+
+# For a complete end-to-end example, see the
+# Quick Start in the user guide:
+# https://leuven-gravity-institute.github.io/gwmock-signal/user_guide/quick_start/
 ```
 
 CLI:
