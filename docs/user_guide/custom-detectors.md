@@ -152,7 +152,7 @@ cust = CustomDetector(
 # Mix: built-in H1 and L1 plus a custom ET1
 net = Network.from_detectors(["H1", "L1", cust], name="HL + ET")
 print(net.detector_names)
-# ('H1', 'L1', ET1)
+# ('H1', 'L1', CustomDetector(name='ET1', latitude_rad=0.7, longitude_rad=0.16, elevation_m=100.0, xarm_azimuth_rad=1.23, yarm_azimuth_rad=2.28, xarm_tilt_rad=0.0, yarm_tilt_rad=0.0, prefix=''))
 ```
 
 When a `Network` contains `CustomDetector` instances, the projection layer
