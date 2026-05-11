@@ -222,6 +222,56 @@ names = factory.list_models()
 print(len(names), names[:5])
 ```
 
+You can look up a single registered generator with `get_model()`:
+
+```python
+generator = factory.get_model("IMRPhenomD")
+# generator is the wrapped backend callable
+```
+
+### Example 6 — Register a model via import string
+
+The `register_model` method also accepts a string path to a callable, so you can
+register waveform generators without importing them at registration time:
+
+```python
+factory = WaveformFactory()
+
+# Colon syntax: "module.path:callable"
+factory.register_model("my_nr_model", "mypackage.waveforms:my_nr_generator")
+
+# Dot syntax: "package.module.callable"
+factory.register_model("another_model", "mypackage.waveforms.a_func")
+```
+
+The string is resolved via `importlib`; the resolved object must be callable.
+
+## LAL backend — accepted parameters
+
+When using `LALSimulationBackend` (the default), only the following parameter
+keys are accepted. Extra keys raise `ValueError`.
+
+| Canonical name          | Aliases    | Default      | Description                   |
+| ----------------------- | ---------- | ------------ | ----------------------------- |
+| `detector_frame_mass_1` | `mass1`    | **required** | Primary mass (solar masses)   |
+| `detector_frame_mass_2` | `mass2`    | **required** | Secondary mass (solar masses) |
+| `luminosity_distance`   | `distance` | **required** | Luminosity distance (Mpc)     |
+| `spin_1x`               | `spin1x`   | `0.0`        | Primary spin x-component      |
+| `spin_1y`               | `spin1y`   | `0.0`        | Primary spin y-component      |
+| `spin_1z`               | `spin1z`   | `0.0`        | Primary spin z-component      |
+| `spin_2x`               | `spin2x`   | `0.0`        | Secondary spin x-component    |
+| `spin_2y`               | `spin2y`   | `0.0`        | Secondary spin y-component    |
+| `spin_2z`               | `spin2z`   | `0.0`        | Secondary spin z-component    |
+| `inclination`           | —          | `0.0`        | Inclination angle (radians)   |
+| `coa_phase`             | —          | `0.0`        | Coalescence phase (radians)   |
+
+The **PyCBC backend** forwards all extra parameters to `get_td_waveform` instead
+of rejecting unknown keys.
+
+!!! note "`sampling_frequency` type" The Python API (`WaveformFactory.generate`,
+`WaveformBackend.generate_td_waveform`) accepts `sampling_frequency` as `float`.
+The CLI `--sample-rate` flag accepts an `int`. Both represent Hertz.
+
 ## Tips and pitfalls
 
 - Unknown model names raise `ValueError`; use `list_models()` after install.

@@ -54,10 +54,24 @@ tree (`src/gwmock_signal/`).
 
 ## Top-level package exports
 
-`import gwmock_signal` re-exports the main symbols from `gwmock_signal.__init__`
-(including `CBCSimulator`, `Network`, `resolve_simulator_backend`, and
-`__version__`). Prefer these imports in application code; submodule paths are
-stable but longer.
+`import gwmock_signal` re-exports the following symbols via
+`gwmock_signal.__init__`. Prefer these imports in application code; submodule
+paths are stable but longer.
+
+| Symbol                         | Category     | Reference                         |
+| ------------------------------ | ------------ | --------------------------------- |
+| `CBCSimulator`                 | Simulator    | [Simulator API](simulator/)       |
+| `TransientSimulator`           | Simulator    | [Simulator API](simulator/)       |
+| `GWSimulator`                  | Simulator    | [Simulator API](simulator/)       |
+| `DetectorStrainStack`          | Multichannel | [Multichannel API](multichannel/) |
+| `Network`                      | Network      | [Network API](network/)           |
+| `CustomDetector`               | Detector     | [Network API](network/)           |
+| `WaveformBackend`              | Waveform     | [Waveform API](waveform/)         |
+| `LALSimulationBackend`         | Waveform     | [Waveform API](waveform/)         |
+| `resolve_simulator_backend`    | Registry     | [Registry API](registry/)         |
+| `register_simulator_backend`   | Registry     | [Registry API](registry/)         |
+| `list_registered_source_types` | Registry     | [Registry API](registry/)         |
+| `__version__`                  | Version      | _(string)_                        |
 
 ## See also
 

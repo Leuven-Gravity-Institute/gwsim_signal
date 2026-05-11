@@ -55,7 +55,7 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
         Path | None,
         typer.Option(
             "--output",
-            help="HDF5 output file path. If omitted, a one-line summary per detector is printed to stdout.",
+            help="Output file path (GWpy TimeSeriesDict HDF5). If omitted, a one-line summary per detector is printed to stdout.",
         ),
     ] = None,
     sample_rate: Annotated[
@@ -83,8 +83,36 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
     ] = "lal",
     seed: Annotated[
         int | None,
-        typer.Option("--seed", help="Optional integer random seed for reproducibility."),
+        typer.Option(
+            "--seed",
+            help=(
+                "Optional integer random seed for reproducibility. "
+                "Sets numpy.random.seed before building the zero-noise background."
+            ),
+        ),
     ] = None,
+    earth_rotation: Annotated[
+        bool,
+        typer.Option(
+            "--earth-rotation/--no-earth-rotation",
+            help=(
+                "Enable time-dependent antenna-pattern evaluation for Earth rotation. "
+                "Recommended for signals longer than a few seconds. "
+                "Set --no-earth-rotation for short waveforms where rotation is negligible."
+            ),
+        ),
+    ] = True,
+    interpolate_if_offset: Annotated[
+        bool,
+        typer.Option(
+            "--interpolate-if-offset/--no-interpolate-if-offset",
+            help=(
+                "Enable cubic interpolation when the injection start is not on a "
+                "target-sample boundary. Use --no-interpolate-if-offset for strict "
+                "grid alignment (returns the background unchanged when off-grid)."
+            ),
+        ),
+    ] = True,
 ) -> None:
     """Inject a single CBC event into zero-noise detector data.
 
@@ -174,6 +202,8 @@ def cbc(  # noqa: PLR0912, PLR0913, PLR0915
         sampling_frequency=float(sample_rate),
         minimum_frequency=f_min,
         waveform_backend=waveform_backend,
+        earth_rotation=earth_rotation,
+        interpolate_if_offset=interpolate_if_offset,
     )
 
     if output is not None:
