@@ -263,14 +263,13 @@ def project_polarizations_to_network(  # noqa: PLR0913
     sindec = np.sin(declination)
     cospsi = np.cos(polarization_angle)
     sinpsi = np.sin(polarization_angle)
+    gmst_array = _gmst_accurate_array(time_array)
+    gha_array = gmst_array - right_ascension
+    cosgha = np.cos(gha_array)
+    singha = np.sin(gha_array)
 
     for name, prefix in detectors:
         if earth_rotation:
-            gmst_array = _gmst_accurate_array(time_array)
-            gha_array = gmst_array - right_ascension
-            cosgha = np.cos(gha_array)
-            singha = np.sin(gha_array)
-
             response, location = _reconstructed_geometry(prefix)
 
             # Vectorized time delay: time_delay = -location · prop_dir / c
