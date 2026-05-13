@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from functools import cache
 from typing import TYPE_CHECKING, Any, cast
 
 import lal
@@ -71,6 +72,12 @@ def _gmst_accurate(t_gps: float) -> float:
     return float(Time(float(t_gps), format="gps", scale="utc", location=(0, 0)).sidereal_time("mean").rad)
 
 
+def _gmst_accurate_array(t_gps: np.ndarray) -> np.ndarray:
+    """Return GMST in radians for an array of GPS times in one vectorized call."""
+    return np.asarray(Time(t_gps, format="gps", scale="utc", location=(0, 0)).sidereal_time("mean").rad, dtype=float)
+
+
+@cache
 def _reconstructed_geometry(prefix: str) -> tuple[np.ndarray, np.ndarray]:
     """Return detector response and location reconstructed from one LAL detector."""
     fr_detector = _get_lal_detector(prefix).frDetector
@@ -252,35 +259,55 @@ def project_polarizations_to_network(  # noqa: PLR0913
 
     strains: dict[str, GWpyTimeSeries] = {}
 
+    cosdec = np.cos(declination)
+    sindec = np.sin(declination)
+    cospsi = np.cos(polarization_angle)
+    sinpsi = np.sin(polarization_angle)
+
     for name, prefix in detectors:
         if earth_rotation:
-            time_delays = np.asarray(
-                [
-                    _time_delay_from_earth_center_lal(
-                        prefix,
-                        right_ascension=right_ascension,
-                        declination=declination,
-                        t_gps=t,
-                    )
-                    for t in time_array
-                ],
-                dtype=float,
-            )
+            gmst_array = _gmst_accurate_array(time_array)
+            gha_array = gmst_array - right_ascension
+            cosgha = np.cos(gha_array)
+            singha = np.sin(gha_array)
+
+            response, location = _reconstructed_geometry(prefix)
+
+            # Vectorized time delay: time_delay = -location · prop_dir / c
+            prop_dir = np.stack([cosdec * cosgha, -cosdec * singha, np.full(len(time_array), sindec)], axis=-1)
+            time_delays = -np.dot(prop_dir, location) / constants.c.value
+
             shifted_times = time_array_wrt_reference - time_delays
-            antenna = np.asarray(
+
+            # Vectorized antenna pattern (same math as _antenna_pattern_lal, batched)
+            gmst_antenna = _gmst_accurate_array(time_array + time_delays)
+            gha_a = gmst_antenna - right_ascension
+            cosgha_a = np.cos(gha_a)
+            singha_a = np.sin(gha_a)
+
+            # Shape (N, 3) — polarization basis vectors
+            x_vec = np.stack(
                 [
-                    _antenna_pattern_lal(
-                        prefix,
-                        right_ascension=right_ascension,
-                        declination=declination,
-                        polarization_angle=polarization_angle,
-                        t_gps=t + delay,
-                    )
-                    for t, delay in zip(time_array, time_delays, strict=False)
+                    -cospsi * singha_a - sinpsi * cosgha_a * sindec,
+                    -cospsi * cosgha_a + sinpsi * singha_a * sindec,
+                    np.full(len(time_array), sinpsi * cosdec),
                 ],
-                dtype=float,
+                axis=-1,
             )
-            fp_vals, fc_vals = antenna[:, 0], antenna[:, 1]
+            y_vec = np.stack(
+                [
+                    sinpsi * singha_a - cospsi * cosgha_a * sindec,
+                    sinpsi * cosgha_a + cospsi * singha_a * sindec,
+                    np.full(len(time_array), cospsi * cosdec),
+                ],
+                axis=-1,
+            )
+
+            # dx[n] = response @ x_vec[n], using row-vector form: x_vec @ response.T
+            dx = x_vec @ response.T
+            dy = y_vec @ response.T
+            fp_vals = np.sum(x_vec * dx - y_vec * dy, axis=-1)
+            fc_vals = np.sum(x_vec * dy + y_vec * dx, axis=-1)
         else:
             time_delay = _time_delay_from_earth_center_lal(
                 prefix,
